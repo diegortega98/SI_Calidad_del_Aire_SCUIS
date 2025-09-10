@@ -1,237 +1,8 @@
-.st-key-reload button {
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-}
+/* ============================================
+   ESSENTIAL STYLES FOR STREAMLIT COMPONENTS
+   ============================================ */
 
-.st-key-map_container{
-    z-index: 0;
-    padding: 30px 35px;
-    background-color: white;
-    border-radius: 12px;
-    height: 560px;
-    min-height: 560px;
-    width: 100%;
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-/* Center and size the map chart properly with horizontal padding */
-.st-key-map_container [data-testid="stDeckGlJsonChart"] {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: calc(500px - 60px) !important;
-    min-width: calc(100% - 70px) !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-}
-
-.st-key-map_container [data-testid="stDeckGlJsonChart"] > div {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: calc(500px - 60px) !important;
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Ensure the deck.gl canvas has proper spacing with vertical padding */
-.st-key-map_container canvas {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: calc(500px - 60px) !important;
-    border-radius: 8px;
-}
-
-/* Fix for deck.gl viewport with vertical padding */
-.st-key-map_container .deck-canvas {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 8px;
-}
-
-.st-key-map_controls{
-    position: absolute;
-    display: flex;
-    padding: 5px 5px 5px 5px;
-    max-width: 350px;
-    min-width: 230px;
-    min-height: 250px;
-    width: 50%;
-    height: max-content;
-    backdrop-filter: blur(15.4px);
-    -webkit-backdrop-filter: blur(15.4px);
-    top: 2%;
-    left: .5%;
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    background-color: rgba(138, 138, 138, 0.4);
-    border-radius: 12px;
-    z-index: 2;
-    justify-content: center;
-    align-items: center;
-    flex-direction: row;
-    flex-wrap: wrap;
-    overflow: hidden;
-}
-
-@media screen and (min-width: 1101px) {
-    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
-        font-size: 14px;
-    }
-    
-    .st-key-map_controls {
-        max-width: 350px;
-        min-width: 230px;
-        width: 50%;
-    }
-}
-
-@media screen and (max-width: 1100px) {
-    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
-        font-size: 10px;
-    }
-    
-    .st-key-map_controls {
-        max-width: 300px;
-        min-width: 200px;
-        width: 60%;
-    }
-}
-
-@media screen and (max-width: 768px) {
-    .st-key-map_controls {
-        max-width: 280px;
-        min-width: 180px;
-        width: 80%;
-        min-height: 200px;
-        left: 2%;
-        top: 5%;
-    }
-    
-    .st-key-map_container {
-        padding: 20px 25px;
-        height: 420px;
-        min-height: 420px;
-    }
-    
-    .st-key-map_container [data-testid="stDeckGlJsonChart"],
-    .st-key-map_container [data-testid="stDeckGlJsonChart"] > div,
-    .st-key-map_container canvas {
-        min-height: calc(380px - 40px) !important;
-    }
-}
-
-/* Additional responsive fixes for smaller screens */
-@media screen and (max-width: 480px) {
-    .st-key-map_container {
-        padding: 15px 20px;
-        height: 370px;
-        min-height: 370px;
-    }
-    
-    .st-key-map_container [data-testid="stDeckGlJsonChart"],
-    .st-key-map_container [data-testid="stDeckGlJsonChart"] > div,
-    .st-key-map_container canvas {
-        min-height: calc(340px - 30px) !important;
-    }
-}
-
-.mydiv {
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-}
-
-.st-key-graphs {
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    flex-direction: row;
-    flex-wrap: wrap;
-    background-color: white;
-    border-radius: 12px;
-    padding: 12px;
-    overflow: hidden;
-}
-
-.st-key-graph1{
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-    width: 30vw;
-    height: 400px;
-    overflow: hidden;
-    padding: 12px;
-    max-width: 700px;
-    min-width: 350px;
-    min-height: 250px;
-}
-
-.st-key-graph2{
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-    width: 30vw;
-    height: 400px;
-    padding: 12px;
-    overflow: hidden;
-    max-width: 700px;
-    min-width:  350px;
-    min-height: 250px;
-}
-
-.st-key-toggle_map_controls{
-    border-radius: 12px;
-    z-index: 2;
-}
-
-.st-key-reload_data{
-    border-radius: 12px;
-    z-index: 2;
-}
-
-.st-key-hidden_map_controls{
-    position: absolute; /* <-- Ahora se posiciona respecto al contenedor */
-    max-width: 200px;
-    min-width: 80px;
-    min-height: 50px;
-    width: 5%;
-    height: 10%;
-    top: 2%;
-    left: .5%;
-    backdrop-filter: blur(15.4px);
-    -webkit-backdrop-filter: blur(15.4px);
-    background-color: rgba(138, 138, 138, 0.4);
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    border-radius: 12px;
-    z-index: 2;
-    justify-content: center; /* horizontal */
-    align-items: center;
-}
-
-[data-testid="stHorizontalBlock"] {
-    filter: drop-shadow(2px 2px 2px gray);
-    padding: 20px 20px 20px 20px;
-    background-color: white;
-    border-radius: 12px;
-}
-
-[data-testid="stSidebarContent"] {
-    background: white; 
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
-    border-radius: 0px;
-}
-
+/* Main App Header */
 header.stAppHeader {
     background: rgba(0, 0, 0, 0);
 }
@@ -240,253 +11,262 @@ header.stAppHeader {
     padding-top: 0.2rem;
 }
 
-.st-key-app_title .stHeading {
-    text-align: center;
+/* ============================================
+   SIDEBAR GRADIENT BACKGROUND & NAVIGATION
+   ============================================ */
+
+[data-testid="stSidebarContent"] {
+    background: linear-gradient(180deg, #2980B9 0%, #6DD5FA 100%); 
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
+    border-radius: 0px;
+    position: relative;
 }
 
-.st-key-app_title{
-    left: 40px
+/* Add a subtle overlay for better text readability */
+[data-testid="stSidebarContent"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
 }
 
-/* Grid Container Theme for About Page */
-.grid-container {
-    display: grid;
-    gap: 20px;
-    margin: 20px 0;
+/* Style sidebar text elements for better contrast */
+[data-testid="stSidebarContent"] .stMarkdown {
+    color: white !important;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    font-weight: 500;
 }
 
-.grid-2 {
-    grid-template-columns: 1fr 1fr;
+[data-testid="stSidebarContent"] .stMarkdown h1,
+[data-testid="stSidebarContent"] .stMarkdown h2,
+[data-testid="stSidebarContent"] .stMarkdown h3 {
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    font-weight: 600;
 }
 
-.grid-3 {
-    grid-template-columns: 1fr 1fr 1fr;
+[data-testid="stSidebarContent"] label {
+    color: white !important;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 14px;
 }
 
-.grid-card {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* ============================================
+   SIDEBAR NAVIGATION LINKS STYLING
+   ============================================ */
+
+[data-testid="stSidebarNav"] {
+    padding: 0;
+    margin: 10px 0;
 }
 
-.grid-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+[data-testid="stSidebarNav"] ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-.card-header {
-    color: #1f2937;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #3b82f6;
+[data-testid="stSidebarNav"] li {
+    margin: 6px 0 !important;
 }
 
-.card-content {
-    color: #4b5563;
-    line-height: 1.6;
+[data-testid="stSidebarNavLink"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 10px 12px !important;
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 10px !important;
+    margin: 10px 8px !important;
+    transition: all 0.3s ease !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 2px solid rgba(255, 255, 255, 0.25) !important;
+    font-weight: 500 !important;
+    font-size: 20px !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    gap: 10px !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
 }
+
+[data-testid="stSidebarNavLink"]:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateX(6px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid="stSidebarNavLink"][aria-selected="true"],
+[data-testid="stSidebarNavLink"][data-selected="true"] {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    font-weight: 700 !important;
+    transform: translateX(8px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Style navigation icons with minimal spacing */
+[data-testid="stSidebarNavLink"] svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+    flex-shrink: 0 !important;
+    width: 10px !important;
+    height: 10px !important;
+    margin: 0 2px 0 0 !important;
+    padding: 0 !important;
+}
+
+[data-testid="stSidebarNavLink"] [data-testid="stIcon"] {
+    margin: 10px 2px 0 0 !important;
+    padding: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Force minimal spacing in all text elements */
+[data-testid="stSidebarNavLink"] span,
+[data-testid="stSidebarNavLink"] p {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Ensure icon and text containers are left aligned with minimal spacing */
+[data-testid="stSidebarNavLink"] > div,
+[data-testid="stSidebarNavLink"] > span {
+    align-items: left !important;
+    width: fit-content !important;
+    text-align: left !important;
+    overflow: visible !important;    
+}
+
+/* Style navigation text spans */
+[data-testid="stSidebarNavLink"] span,
+[data-testid="stSidebarNavLink"] p,
+[data-testid="stSidebarNavLink"] div,
+[data-testid="stSidebarNavLink"] * {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    font-weight: inherit !important;
+    font-size: inherit !important;
+}
+
+/* ============================================
+   SIDEBAR WIDGETS & INPUTS STYLING
+   ============================================ */
+
+/* Style sidebar buttons */
+[data-testid="stSidebarContent"] .stButton button {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #333 !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid="stSidebarContent"] .stButton button:hover {
+    background: rgba(255, 255, 255, 1) !important;
+    border-color: rgba(255, 255, 255, 1) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Style sidebar input fields */
+[data-testid="stSidebarContent"] .stSelectbox > div > div,
+[data-testid="stSidebarContent"] .stTextInput > div > div > input,
+[data-testid="stSidebarContent"] .stNumberInput > div > div > input {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 6px !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-testid="stSidebarContent"] .stSelectbox > div > div:focus-within,
+[data-testid="stSidebarContent"] .stTextInput > div > div > input:focus,
+[data-testid="stSidebarContent"] .stNumberInput > div > div > input:focus {
+    border-color: rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ============================================
+   HOME PAGE STYLES
+   ============================================ */
 
 .hero-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 40px;
+    padding: 20px;
     border-radius: 15px;
     text-align: center;
-    margin: 20px 0;
+    margin: 10px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
+/* Home page navigation buttons styling */
+.stButton > button {
+    background: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    padding: 12px 20px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
 }
 
-.stat-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
+.stButton > button:hover {
+    background: #4b8fd8 !important;
+    color: white !important;
+    border-color: #89aace !important;
+    cursor: pointer !important;
 }
 
-.stat-number {
-    font-size: 24px;
-    font-weight: bold;
-    color: #3b82f6;
-}
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
 
-.stat-label {
-    color: #64748b;
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-/* Comprehensive Responsive Design */
-
-/* Large Desktop - 1200px and up */
-@media (min-width: 1200px) {
-    .grid-container {
-        gap: 25px;
-        margin: 30px 0;
-    }
-    
-    .grid-card {
-        padding: 25px;
+/* Tablet - 768px and below */
+@media (max-width: 768px) {
+    [data-testid="stSidebarNavLink"] {
+        padding: 8px 10px !important;
+        margin: 4px 6px !important;
+        font-size: 13px !important;
+        gap: 1px !important;
     }
     
     .hero-section {
-        padding: 50px;
-    }
-    
-    .card-header {
-        font-size: 20px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-    }
-}
-
-/* Desktop - 992px to 1199px */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .grid-container {
-        gap: 20px;
-    }
-    
-    .grid-card {
-        padding: 20px;
-    }
-    
-    .hero-section {
-        padding: 40px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-}
-
-/* Tablet - 768px to 991px */
-@media (min-width: 768px) and (max-width: 991px) {
-    .grid-2 {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .grid-3 {
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-    
-    .grid-card {
-        padding: 18px;
-    }
-    
-    .hero-section {
-        padding: 30px 20px;
-    }
-    
-    .card-header {
-        font-size: 17px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-    }
-    
-    .stat-number {
-        font-size: 22px;
-    }
-}
-
-/* Mobile Large - 576px to 767px */
-@media (min-width: 576px) and (max-width: 767px) {
-    .grid-2, .grid-3 {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .grid-container {
-        gap: 15px;
-        margin: 15px 0;
-    }
-    
-    .grid-card {
         padding: 15px;
-        border-radius: 8px;
-    }
-    
-    .hero-section {
-        padding: 25px 15px;
-        border-radius: 10px;
-        margin: 15px 0;
-    }
-    
-    .hero-section h1 {
-        font-size: 28px !important;
-    }
-    
-    .hero-section h2 {
-        font-size: 18px !important;
-    }
-    
-    .card-header {
-        font-size: 16px;
-        margin-bottom: 12px;
-    }
-    
-    .card-content {
-        font-size: 14px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-    
-    .stat-card {
-        padding: 15px;
-    }
-    
-    .stat-number {
-        font-size: 20px;
-    }
-    
-    .stat-label {
-        font-size: 12px;
+        margin: 5px 0;
     }
 }
 
-/* Mobile Small - up to 575px */
-@media (max-width: 575px) {
-    .grid-2, .grid-3 {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .grid-container {
-        gap: 10px;
-        margin: 10px 0;
-    }
-    
-    .grid-card {
-        padding: 12px;
-        border-radius: 6px;
-        margin: 0 5px;
+/* Mobile - 480px and below */
+@media (max-width: 480px) {
+    [data-testid="stSidebarNavLink"] {
+        padding: 6px 8px !important;
+        margin: 2px 4px !important;
+        font-size: 12px !important;
+        gap: 0px !important;
     }
     
     .hero-section {
-        padding: 20px 10px;
+        padding: 10px;
         border-radius: 8px;
-        margin: 10px 5px;
     }
     
     .hero-section h1 {
@@ -502,210 +282,5 @@ header.stAppHeader {
     .hero-section p {
         font-size: 14px !important;
         margin: 15px 0 0 0 !important;
-    }
-    
-    .card-header {
-        font-size: 15px;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-    }
-    
-    .card-content {
-        font-size: 13px;
-        line-height: 1.5;
-    }
-    
-    .card-content ul {
-        padding-left: 15px;
-    }
-    
-    .card-content li {
-        margin-bottom: 5px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .stat-card {
-        padding: 12px;
-    }
-    
-    .stat-number {
-        font-size: 18px;
-    }
-    
-    .stat-label {
-        font-size: 11px;
-    }
-    
-    /* Improve touch targets for mobile */
-    .grid-card:hover {
-        transform: none; /* Disable hover effects on mobile */
-    }
-    
-    /* Better spacing for mobile readability */
-    .card-content p {
-        margin-bottom: 10px;
-    }
-    
-    .card-content strong {
-        display: block;
-        margin-bottom: 2px;
-    }
-}
-
-/* Ultra-wide screens - 1400px and up */
-@media (min-width: 1400px) {
-    .grid-container {
-        max-width: 1200px;
-        margin: 30px auto;
-        gap: 30px;
-    }
-    
-    .hero-section {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 60px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-    }
-}
-
-/* Print styles */
-@media print {
-    .grid-card {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #ccc;
-    }
-    
-    .hero-section {
-        background: #f5f5f5 !important;
-        color: black !important;
-    }
-    
-    .grid-container {
-        gap: 15px;
-    }
-}
-
-/* Data Table Page Styles */
-.data-table-container {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 10px 0;
-}
-
-.data-summary-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 1px solid #cbd5e0;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    transition: transform 0.2s ease;
-}
-
-.data-summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.data-metric-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: #2d3748;
-    margin-bottom: 5px;
-}
-
-.data-metric-label {
-    font-size: 14px;
-    color: #718096;
-    font-weight: 500;
-}
-
-.filter-section {
-    background: #f7fafc;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 15px 0;
-    border: 1px solid #e2e8f0;
-}
-
-.download-button-container {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 15px 0;
-}
-
-.search-container {
-    background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 15px 0;
-}
-
-/* Enhanced dataframe styling */
-.stDataFrame {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Responsive adjustments for data table */
-@media (max-width: 768px) {
-    .data-table-container {
-        padding: 15px;
-        margin: 5px 0;
-    }
-    
-    .data-summary-card {
-        padding: 12px;
-        margin: 5px 0;
-    }
-    
-    .data-metric-value {
-        font-size: 20px;
-    }
-    
-    .data-metric-label {
-        font-size: 12px;
-    }
-    
-    .filter-section {
-        padding: 12px;
-        margin: 10px 0;
-    }
-    
-    .download-button-container {
-        flex-direction: column;
-        gap: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .data-table-container {
-        padding: 10px;
-        border-radius: 6px;
-    }
-    
-    .data-summary-card {
-        padding: 10px;
-    }
-    
-    .data-metric-value {
-        font-size: 18px;
-    }
-    
-    .filter-section {
-        padding: 10px;
     }
 }

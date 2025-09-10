@@ -10,7 +10,7 @@ def load_css(file_path):
 css_path = pathlib.Path("assets/styles.css")
 load_css(css_path)
 
-about_page = st.Page("pages/home.py", title="Acerca de", icon=":material/quick_reference:")
+about_page = st.Page("pages/home.py", title="Inicio", icon=":material/home:")
 dashboard_page = st.Page("pages/map.py", title="Mapa", icon=":material/map:")
 analytics_page = st.Page("pages/analytics.py", title="Análisis", icon=":material/analytics:")
 data_table_page = st.Page("pages/table.py", title="Datos", icon=":material/table_view:")
