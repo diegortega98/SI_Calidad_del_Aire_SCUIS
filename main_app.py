@@ -10,6 +10,9 @@ def load_css(file_path):
 css_path = pathlib.Path("assets/styles.css")
 load_css(css_path)
 
+# Add logo to sidebar
+
+
 about_page = st.Page("pages/home.py", title="Inicio", icon=":material/home:")
 dashboard_page = st.Page("pages/map.py", title="Mapa", icon=":material/map:")
 analytics_page = st.Page("pages/analytics.py", title="Análisis", icon=":material/analytics:")

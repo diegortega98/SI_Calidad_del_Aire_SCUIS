@@ -17,7 +17,7 @@ def cached_query(flux: str):
     return run_query(client, flux)
 
 @st.fragment()
-def plot_map(df):
+def plot_map(df, selected_parameters):
     import pandas as pd
     import pydeck as pdk
 
@@ -191,6 +191,27 @@ def main():
         filter_container = st.container(border=True)
         with filter_container:
             
+            # Define available parameters (used across columns)
+            available_parameters = {
+                "CO2": {
+                    "column": "metrics_0_fields_CO2",
+                    "label": "CO₂",
+                    "unit": "ppm",
+                    "default": True
+                },
+                "PM2.5": {
+                    "column": "metrics_0_fields_PM2.5", 
+                    "label": "PM2.5",
+                    "unit": "μg/m³",
+                    "default": True
+                },
+                "Temp": {
+                    "column": "metrics_0_fields_Temperature",
+                    "label": "Temperatura",
+                    "unit": "°C",
+                    "default": False
+            }}
+            
             # Create filter columns
             col1, col2, col3 = st.columns(3)
             
@@ -224,17 +245,29 @@ def main():
                     st.info("No hay datos de ruta disponibles")
             
             with col3:
-                # Tag/Device filter
-                if 'header_deviceId' in df.columns:
-                    unique_devices = df['header_deviceId'].dropna().unique()
-                    selected_devices = st.multiselect(
-                        "Selecciona los dispositivos:",
-                        options=sorted(unique_devices),
-                        default=sorted(unique_devices),
-                        key="device_filter"
-                    )
-                else:
-                    st.info("No hay datos de dispositivo disponibles")
+                # Parameters filter - Multiselect
+                available_param_options = []
+                default_selected = []
+                
+                for param_key, param_info in available_parameters.items():
+                    if param_info["column"] in df.columns:
+                        available_param_options.append(param_key)
+                        if param_info["default"]:
+                            default_selected.append(param_key)
+                
+                selected_param_keys = st.multiselect(
+                    "Parámetros a Mostrar:",
+                    options=available_param_options,
+                    default=default_selected,
+                    format_func=lambda x: available_parameters[x]["label"],
+                    key="parameters_filter",
+                    help="Selecciona los parámetros que deseas visualizar en el mapa"
+                )
+                
+                # Convert to the expected format for compatibility
+                selected_parameters = {}
+                for param_key in available_parameters.keys():
+                    selected_parameters[param_key] = param_key in selected_param_keys
         
        
         
@@ -256,14 +289,21 @@ def main():
             if 'route_int' in df.columns and selected_routes:
                 filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
             
-            # Apply device filter
-            if 'header_deviceId' in df.columns and selected_devices:
-                filtered_df = filtered_df[filtered_df['header_deviceId'].isin(selected_devices)]
+            # Filter data based on selected parameters (keep all data but note selection for display)
+            # Parameters selection affects tooltip and display, not data filtering
+            display_columns = []
+            for param_key, is_selected in selected_parameters.items():
+                if is_selected and param_key in available_parameters:
+                    column_name = available_parameters[param_key]["column"]
+                    if column_name in filtered_df.columns:
+                        display_columns.append(column_name)
             
             # Show filtered results
             if not filtered_df.empty:
                 st.sidebar.markdown(f"Mostrando {len(filtered_df):,} registros filtrados de {len(df):,} totales")
-                plot_map(filtered_df)
+
+
+                plot_map(filtered_df, display_columns)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 

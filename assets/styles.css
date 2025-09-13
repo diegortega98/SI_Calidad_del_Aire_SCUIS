@@ -425,3 +425,59 @@ div[data-baseweb="popover"] [data-baseweb="menu"] li[aria-activedescendant] {
     backdrop-filter: blur(10px) !important;
     border-radius: 8px !important;
 }
+
+/* ============================================
+   PARAMETER EXPANDER STYLES
+   ============================================ */
+
+/* Expander container styling */
+.stExpander {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* Expander header styling */
+.stExpander > div:first-child {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px 8px 0 0 !important;
+    transition: all 0.3s ease !important;
+}
+
+.stExpander > div:first-child:hover {
+    background: rgba(74, 144, 226, 0.2) !important;
+}
+
+/* Expander header text */
+.stExpander > div:first-child p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+
+/* Expander content area */
+.stExpander > div:last-child {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 0 0 8px 8px !important;
+    padding: 15px !important;
+}
+
+/* Checkboxes inside expander */
+.stExpander .stCheckbox {
+    margin-bottom: 8px !important;
+}
+
+.stExpander .stCheckbox label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500 !important;
+}
+
+/* Caption text in expander */
+.stExpander .stCaption {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 12px !important;
+    margin-top: 10px !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+}
