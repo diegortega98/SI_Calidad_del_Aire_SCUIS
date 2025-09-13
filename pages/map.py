@@ -91,20 +91,44 @@ def plot_map(df, selected_parameters):
         df['co2_value'] = [0] * len(df)
         df['pm25_value'] = [0] * len(df)
 
+    # Calculate contamination mean for height
+    # Create contamination_mean column combining CO2 and PM2.5
+    if 'metrics_0_fields_CO2' in df.columns and 'metrics_0_fields_PM2.5' in df.columns:
+        # Normalize values to similar scales for meaningful average
+        # CO2 typically ranges 400-2000 ppm, PM2.5 ranges 0-500 μg/m³
+        co2_normalized = df['metrics_0_fields_CO2'] / 10  # Scale down CO2
+        pm25_normalized = df['metrics_0_fields_PM2.5']    # Keep PM2.5 as is
+        df['contamination_mean'] = (co2_normalized + pm25_normalized) / 2
+    elif 'metrics_0_fields_PM2.5' in df.columns:
+        df['contamination_mean'] = df['metrics_0_fields_PM2.5']
+    elif 'metrics_0_fields_CO2' in df.columns:
+        df['contamination_mean'] = df['metrics_0_fields_CO2'] / 10
+    else:
+        df['contamination_mean'] = 50  # Default value
+
     # Define a HexagonLayer to display on a map
-    layer = pdk.Layer(
+    hexagon_layer = pdk.Layer(
         "HexagonLayer",
         df,
         get_position=["header_longitude", "header_latitude"],
-        get_weight="pm25_size",
-        radius=25,
+
+        radius=30,
+        elevationAggregation = 'MEAN',
         elevation_scale=10,
-        elevation_range=[0, 100],
         pickable=True,
-        extruded=True,
+        extruded=False,
         coverage=1,
         auto_highlight=True,
-        get_fill_color="pm25_color",
+        colorRange = [
+            [0, 228, 0, 180],      # Green - Good (0-12 PM2.5)
+            [255, 255, 0, 180],    # Yellow - Moderate (12.1-35.4 PM2.5)
+            [255, 126, 0, 180],    # Orange - Unhealthy for Sensitive (35.5-55.4 PM2.5)
+            [255, 0, 0, 180],      # Red - Unhealthy (55.5-150.4 PM2.5)
+            [143, 63, 151, 180],   # Purple - Very Unhealthy (150.5-250.4 PM2.5)
+            [126, 0, 35, 180]      # Maroon - Hazardous (250.5+ PM2.5)
+        ]
+        
+
     )
 
     # Set the viewport location
@@ -113,22 +137,24 @@ def plot_map(df, selected_parameters):
         longitude=df['header_longitude'].mean(),
         zoom=14,
         bearing=0,
-        pitch=20
+        pitch=45
     )
 
-    # Render
+    # Render with HexagonLayer
     r = pdk.Deck(
-        layers=[layer], 
+        layers=[hexagon_layer], 
         map_style='road',
         initial_view_state=view_state, 
         tooltip={
-            "text":"{co2_value}",
+            "html": "<b>Contaminación Promedio</b><br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
             "style": {
-                "backgroundColor": "rgba(0, 0, 0, 0.5)",
+                "backgroundColor": "rgba(0, 0, 0, 0.8)",
                 "color": "white",
                 "borderRadius": "10px",
                 "backdrop-filter": "blur(15.4px)",
-                "-webkit-backdrop-filter": "blur(15.4px)"
+                "-webkit-backdrop-filter": "blur(15.4px)",
+                "padding": "10px",
+                "fontSize": "12px"
             }
         }
     )

@@ -13,10 +13,10 @@ header.stAppHeader {
 
 /* Sidebar toggle button styling - only affects header icons */
 header [data-testid="stIconMaterial"] {
-    color: #007bff !important;
-    stroke: #007bff !important;
+    color: #28a745 !important;
+    stroke: #28a745 !important;
     stroke-width: 1.5px !important;
-    filter: drop-shadow(0 1px 2px rgba(0, 123, 255, 0.3)) !important;
+    filter: drop-shadow(0 1px 2px rgba(40, 167, 69, 0.3)) !important;
     background-color: rgba(255, 255, 255, 0.411) !important;
     border-radius: 6px !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
@@ -24,9 +24,9 @@ header [data-testid="stIconMaterial"] {
 
 header [data-testid="stIconMaterial"]:hover {
     color: #c6ced6 !important;
-    stroke: #0056b3 !important;
+    stroke: #1e7e34 !important;
     stroke-width: 2px !important;
-    filter: drop-shadow(0 2px 4px rgba(0, 86, 179, 0.4)) !important;
+    filter: drop-shadow(0 2px 4px rgba(30, 126, 52, 0.4)) !important;
     background-color: white !important;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
 }
@@ -36,7 +36,7 @@ header [data-testid="stIconMaterial"]:hover {
    ============================================ */
 
 [data-testid="stSidebarContent"] {
-    background: linear-gradient(180deg, #2980B9 0%, #6DD5FA 100%); 
+    background: linear-gradient(180deg, #28a745 0%, #5cb85c 100%); 
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
     border-radius: 0px;
     position: relative;
@@ -228,7 +228,7 @@ header [data-testid="stIconMaterial"]:hover {
    ============================================ */
 
 .hero-section {
-    background: #2980B9;
+    background: #28a745;
     color: white;
     padding: 20px;
     border-radius: 15px;
@@ -251,9 +251,9 @@ header [data-testid="stIconMaterial"]:hover {
 }
 
 .stButton > button:hover {
-    background: #4b8fd8 !important;
+    background: #34ce57 !important;
     color: white !important;
-    border-color: #89aace !important;
+    border-color: #5cb85c !important;
     cursor: pointer !important;
 }
 
@@ -328,7 +328,7 @@ header [data-testid="stIconMaterial"]:hover {
 
 /*Date picker container*/
 .stDateInput > div *  {
-    background-color: #2980B9 !important;
+    background-color: #28a745 !important;
     border-radius: 8px !important;
     transition: all 0.3s ease !important;
     color: white !important;
@@ -338,7 +338,7 @@ header [data-testid="stIconMaterial"]:hover {
 
 /* Calendar popup container */
 div[role="presentation"]  {
-    background: #2980B9;
+    background: #28a745;
     padding: 8px !important;
 }
 
@@ -348,7 +348,7 @@ div[role="presentation"] > div {
 
 div[data-baseweb="calendar"][aria-roledescription="datepicker"]
   div:has(> button[aria-label="Previous month."]) {
-  background-color: #2980B9 !important;  /* tu color */
+  background-color: #28a745 !important;  /* tu color */
   color: #fff !important;
   border-top-left-radius: 12px !important;
   border-top-right-radius: 12px !important;
@@ -408,7 +408,7 @@ div[data-baseweb="popover"] [data-baseweb="menu"] li[aria-activedescendant] {
 .stMultiSelect [data-baseweb="select"] {
     background: rgba(255, 255, 255, 1) !important;
     border-radius: 8px !important;
-    border: 1px solid #0056b3 !important;
+    border: 1px solid #1e7e34 !important;
     
 }
 
