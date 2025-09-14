@@ -147,29 +147,104 @@ def plot_map(df, selected_parameters, auto_refresh=False):
             }
             paths_data.append(path)
     
-    # Convert to DataFrame
-    if paths_data:
-        paths_df = pd.DataFrame(paths_data)
+    # Initialize layers list
+    layers = []
+    
+    # Add heatmap layers based on selected parameters
+    if selected_parameters and isinstance(selected_parameters, dict):
         
-        # Define a LineLayer to display paths on the map
-        line_layer = pdk.Layer(
-            'LineLayer',
-            data=paths_df,
-            get_source_position='[start_lon, start_lat]',
-            get_target_position='[end_lon, end_lat]',
-            get_color='[R, G, B, 200]',
-            get_width=10,
-            highlight_color=[0, 0, 255],
-            picking_radius=10,
-            auto_highlight=True,
-            pickable=True,
-        )
+        # CO2 Heatmap Layer
+        if selected_parameters.get('CO2', False) and 'metrics_0_fields_CO2' in df.columns:
+            co2_data = df.dropna(subset=['metrics_0_fields_CO2']).copy()
+            if not co2_data.empty:
+                # Normalize CO2 values for better visualization (0-1 range)
+                co2_min = co2_data['metrics_0_fields_CO2'].min()
+                co2_max = co2_data['metrics_0_fields_CO2'].max()
+                if co2_max > co2_min:
+                    co2_data['weight'] = (co2_data['metrics_0_fields_CO2'] - co2_min) / (co2_max - co2_min)
+                else:
+                    co2_data['weight'] = 0.5
+                
+                co2_heatmap = pdk.Layer(
+                    'HeatmapLayer',
+                    data=co2_data,
+                    get_position='[header_longitude, header_latitude]',
+                    get_weight='weight',
+                    radius_pixels=80,
+                    opacity=0.5,
+                    color_range=[
+                        [0, 255, 0],      # Green (low CO2)
+                        [255, 255, 0],    # Yellow
+                        [255, 165, 0],    # Orange
+                        [255, 0, 0],      # Red (high CO2)
+                        [139, 0, 0],      # Dark red
+                        [75, 0, 130]      # Purple (very high)
+                    ],
+                    pickable=False
+                )
+                layers.append(co2_heatmap)
         
-        layers = [line_layer]
-    else:
-        # If no paths can be created, show a message
-        st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
-        layers = []
+        # Temperature Heatmap Layer
+        if selected_parameters.get('Temp', False) and 'metrics_0_fields_Temperature' in df.columns:
+            temp_data = df.dropna(subset=['metrics_0_fields_Temperature']).copy()
+            if not temp_data.empty:
+                # Normalize temperature values for better visualization (0-1 range)
+                temp_min = temp_data['metrics_0_fields_Temperature'].min()
+                temp_max = temp_data['metrics_0_fields_Temperature'].max()
+                if temp_max > temp_min:
+                    temp_data['weight'] = (temp_data['metrics_0_fields_Temperature'] - temp_min) / (temp_max - temp_min)
+                else:
+                    temp_data['weight'] = 0.5
+                
+                temp_heatmap = pdk.Layer(
+                    'HeatmapLayer',
+                    data=temp_data,
+                    get_position='[header_longitude, header_latitude]',
+                    get_weight='weight',
+                    radius_pixels=60,
+                    opacity=0.6,
+                    color_range=[
+                        [0, 0, 255],      # Blue (cold)
+                        [0, 255, 255],    # Cyan 
+                        [0, 255, 0],      # Green
+                        [255, 255, 0],    # Yellow
+                        [255, 165, 0],    # Orange
+                        [255, 0, 0]       # Red (hot)
+                    ],
+                    pickable=False
+                )
+                layers.append(temp_heatmap)
+    
+    # Add PM2.5 paths layer only if PM2.5 is selected
+    if selected_parameters and isinstance(selected_parameters, dict) and selected_parameters.get('PM2.5', False):
+        # Convert to DataFrame and add LineLayer for PM2.5 paths
+        if paths_data:
+            paths_df = pd.DataFrame(paths_data)
+            
+            # Define a LineLayer to display paths on the map
+            line_layer = pdk.Layer(
+                'LineLayer',
+                data=paths_df,
+                get_source_position='[start_lon, start_lat]',
+                get_target_position='[end_lon, end_lat]',
+                get_color='[R, G, B, 200]',
+                get_width=10,
+                highlight_color=[0, 0, 255],
+                picking_radius=10,
+                auto_highlight=True,
+                pickable=True,
+            )
+            
+            layers.append(line_layer)
+        else:
+            # If no paths can be created, show a message only if no other layers exist
+            if not layers:
+                st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
+    
+    # Check if any layers exist
+    if not layers:
+        st.warning("No hay capas disponibles para mostrar. Selecciona al menos un parámetro.")
+        return
 
     # Set the viewport location
     view_state = pdk.ViewState(
@@ -204,7 +279,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
 
 
 @st.fragment(run_every=5)
-def auto_refresh_map(date_range, selected_routes, display_columns):
+def auto_refresh_map(date_range, selected_routes, selected_parameters):
     """Fragment that runs every 5 seconds when auto-refresh is enabled"""
     import pandas as pd
     
@@ -244,7 +319,7 @@ def auto_refresh_map(date_range, selected_routes, display_columns):
                 st.caption(f"Última actualización: {current_time}")
                 
                 # Plot the refreshed map
-                plot_map(filtered_df, display_columns, auto_refresh=True)
+                plot_map(filtered_df, selected_parameters, auto_refresh=True)
             else:
                 st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
         else:
@@ -286,7 +361,7 @@ def main():
         st.stop()
 
     # Query
-    fields = ["header_latitude", "header_longitude", "metrics_0_fields_CO2", "metrics_0_fields_PM2.5", "metrics_0_fields_Route", "header_deviceId"]
+    fields = ["header_latitude", "header_longitude", "metrics_0_fields_CO2", "metrics_0_fields_PM2.5", "metrics_0_fields_Route","metrics_0_fields_Temperature", "header_deviceId"]
     flux = flux_select(fields, start="-30d")
 
     with st.spinner("Consultando datos..."):
@@ -321,7 +396,7 @@ def main():
                     "column": "metrics_0_fields_CO2",
                     "label": "CO₂",
                     "unit": "ppm",
-                    "default": True
+                    "default": False
                 },
                 "PM2.5": {
                     "column": "metrics_0_fields_PM2.5", 
@@ -394,7 +469,6 @@ def main():
                     selected_parameters[param_key] = param_key in selected_param_keys
             
             # Auto-refresh toggle - in a separate row
-            st.markdown("---")
             col_refresh = st.columns([1, 3])[0]  # Use only first column for compact layout
             with col_refresh:
                 auto_refresh_enabled = st.toggle(
@@ -440,10 +514,10 @@ def main():
                 # Handle auto-refresh mode
                 if auto_refresh_enabled:
                     # Use the auto-refresh fragment
-                    auto_refresh_map(date_range, selected_routes, display_columns)
+                    auto_refresh_map(date_range, selected_routes, selected_parameters)
                 else:
                     # Use the normal static map
-                    plot_map(filtered_df, display_columns, auto_refresh=False)
+                    plot_map(filtered_df, selected_parameters, auto_refresh=False)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
