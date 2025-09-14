@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+import time
 from data.connection import get_client_or_raise, run_query, flux_select, ConnectionNotReady
 from influxdb_client import InfluxDBClient
-
+import pydeck as pdk
 # Cachea el cliente .
 @st.cache_resource(show_time=True,show_spinner=False)
 def get_cached_client() -> InfluxDBClient:
@@ -17,7 +18,7 @@ def cached_query(flux: str):
     return run_query(client, flux)
 
 @st.fragment()
-def plot_map(df, selected_parameters):
+def plot_map(df, selected_parameters, auto_refresh=False):
     import pandas as pd
     import pydeck as pdk
 
@@ -106,30 +107,69 @@ def plot_map(df, selected_parameters):
     else:
         df['contamination_mean'] = 50  # Default value
 
-    # Define a HexagonLayer to display on a map
-    hexagon_layer = pdk.Layer(
-        "HexagonLayer",
-        df,
-        get_position=["header_longitude", "header_latitude"],
-
-        radius=30,
-        elevationAggregation = 'MEAN',
-        elevation_scale=10,
-        pickable=True,
-        extruded=False,
-        coverage=1,
-        auto_highlight=True,
-        colorRange = [
-            [0, 228, 0, 180],      # Green - Good (0-12 PM2.5)
-            [255, 255, 0, 180],    # Yellow - Moderate (12.1-35.4 PM2.5)
-            [255, 126, 0, 180],    # Orange - Unhealthy for Sensitive (35.5-55.4 PM2.5)
-            [255, 0, 0, 180],      # Red - Unhealthy (55.5-150.4 PM2.5)
-            [143, 63, 151, 180],   # Purple - Very Unhealthy (150.5-250.4 PM2.5)
-            [126, 0, 35, 180]      # Maroon - Hazardous (250.5+ PM2.5)
-        ]
+    # Create paths data if there are 2 or more records
+    paths_data = []
+    if len(df) >= 2:
+        # Sort by time to create logical path sequence
+        if '_time' in df.columns:
+            df_sorted = df.sort_values('_time')
+        else:
+            df_sorted = df.copy()
         
-
-    )
+        # Create paths between consecutive points
+        for i in range(len(df_sorted) - 1):
+            current_point = df_sorted.iloc[i]
+            next_point = df_sorted.iloc[i + 1]
+            
+            # Get PM2.5 color for the path (using current point's color)
+            if 'pm25_color' in df.columns:
+                color = current_point['pm25_color']
+                # Ensure color is in the right format [R, G, B, A]
+                if isinstance(color, list) and len(color) >= 3:
+                    path_color = [color[0], color[1], color[2], 200]
+                else:
+                    path_color = [0, 228, 0, 200]  # Default green
+            else:
+                path_color = [0, 228, 0, 200]  # Default green
+            
+            path = {
+                'start_lon': current_point['header_longitude'],
+                'start_lat': current_point['header_latitude'],
+                'end_lon': next_point['header_longitude'],
+                'end_lat': next_point['header_latitude'],
+                'R': path_color[0],
+                'G': path_color[1],
+                'B': path_color[2],
+                'pm25_category': current_point.get('pm25_category', 'No disponible'),
+                'co2_value': current_point.get('co2_value', 0),
+                'pm25_value': current_point.get('pm25_value', 0),
+                'timestamp': current_point.get('_time', '').strftime('%Y-%m-%d %H:%M:%S') if pd.notna(current_point.get('_time', '')) else 'No disponible'
+            }
+            paths_data.append(path)
+    
+    # Convert to DataFrame
+    if paths_data:
+        paths_df = pd.DataFrame(paths_data)
+        
+        # Define a LineLayer to display paths on the map
+        line_layer = pdk.Layer(
+            'LineLayer',
+            data=paths_df,
+            get_source_position='[start_lon, start_lat]',
+            get_target_position='[end_lon, end_lat]',
+            get_color='[R, G, B, 200]',
+            get_width=10,
+            highlight_color=[0, 0, 255],
+            picking_radius=10,
+            auto_highlight=True,
+            pickable=True,
+        )
+        
+        layers = [line_layer]
+    else:
+        # If no paths can be created, show a message
+        st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
+        layers = []
 
     # Set the viewport location
     view_state = pdk.ViewState(
@@ -140,13 +180,13 @@ def plot_map(df, selected_parameters):
         pitch=45
     )
 
-    # Render with HexagonLayer
+    # Render with LineLayer
     r = pdk.Deck(
-        layers=[hexagon_layer], 
+        layers=layers, 
         map_style='road',
         initial_view_state=view_state, 
         tooltip={
-            "html": "<b>Contaminación Promedio</b><br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
+            "html": "<b>Ruta de Contaminación</b><br/><b>Tiempo:</b> {timestamp}<br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
             "style": {
                 "backgroundColor": "rgba(0, 0, 0, 0.8)",
                 "color": "white",
@@ -161,6 +201,64 @@ def plot_map(df, selected_parameters):
     
     # Mostrar en Streamlit
     st.pydeck_chart(r)
+
+
+@st.fragment(run_every=5)
+def auto_refresh_map(date_range, selected_routes, display_columns):
+    """Fragment that runs every 5 seconds when auto-refresh is enabled"""
+    import pandas as pd
+    
+    # Re-query fresh data
+    fields = ["header_latitude", "header_longitude", "metrics_0_fields_CO2", "metrics_0_fields_PM2.5", "metrics_0_fields_Route", "header_deviceId"]
+    flux = flux_select(fields, start="-30d")
+    
+    try:
+        client = get_cached_client()
+        # Clear cache to get fresh data
+        st.cache_data.clear()
+        fresh_df = cached_query(flux)
+        
+        if not fresh_df.empty:
+            # Convert routes to integers for better handling
+            if 'metrics_0_fields_Route' in fresh_df.columns:
+                fresh_df['route_int'] = pd.to_numeric(fresh_df['metrics_0_fields_Route'], errors='coerce')
+            
+            # Apply the same filters as main app
+            filtered_df = fresh_df.copy()
+            
+            # Apply date filter
+            if '_time' in fresh_df.columns and len(date_range) == 2:
+                start_date, end_date = date_range
+                filtered_df = filtered_df[
+                    (filtered_df['_time'].dt.date >= start_date) & 
+                    (filtered_df['_time'].dt.date <= end_date)
+                ]
+            
+            # Apply route filter
+            if 'route_int' in fresh_df.columns and selected_routes:
+                filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
+            
+            if not filtered_df.empty:
+                # Show refresh indicator
+                current_time = pd.Timestamp.now().strftime("%H:%M:%S")
+                st.caption(f"Última actualización: {current_time}")
+                
+                # Plot the refreshed map
+                plot_map(filtered_df, display_columns, auto_refresh=True)
+            else:
+                st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
+        else:
+            st.warning("No hay datos disponibles para la actualización automática.")
+        
+    except Exception as e:
+        st.error(f"Error al actualizar mapa: {e}")
+
+
+
+    
+    
+    # Mostrar en Streamlit
+    
 
 
 def main():
@@ -201,11 +299,11 @@ def main():
             try:
                 last_time = df['_time'].max()
                 last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
-
+                st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
     
-    st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
+    
 
     if 'df' in locals() and not df.empty:
         # Convert routes to integers for better handling
@@ -294,6 +392,17 @@ def main():
                 selected_parameters = {}
                 for param_key in available_parameters.keys():
                     selected_parameters[param_key] = param_key in selected_param_keys
+            
+            # Auto-refresh toggle - in a separate row
+            st.markdown("---")
+            col_refresh = st.columns([1, 3])[0]  # Use only first column for compact layout
+            with col_refresh:
+                auto_refresh_enabled = st.toggle(
+                    "Actualizar en tiempo real (5s)",
+                    value=False,
+                    key="map_auto_refresh",
+                    
+                )
         
        
         
@@ -328,8 +437,13 @@ def main():
             if not filtered_df.empty:
                 st.sidebar.markdown(f"Mostrando {len(filtered_df):,} registros filtrados de {len(df):,} totales")
 
-
-                plot_map(filtered_df, display_columns)
+                # Handle auto-refresh mode
+                if auto_refresh_enabled:
+                    # Use the auto-refresh fragment
+                    auto_refresh_map(date_range, selected_routes, display_columns)
+                else:
+                    # Use the normal static map
+                    plot_map(filtered_df, display_columns, auto_refresh=False)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
