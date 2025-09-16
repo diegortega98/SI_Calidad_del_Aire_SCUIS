@@ -375,6 +375,12 @@ header [data-testid="stIconMaterial"]:hover {
    RESPONSIVE DESIGN
    ============================================ */
 
+@media (max-width: 768px) {
+  .st-key-graphs {
+    flex-wrap: wrap;
+  }
+}
+
 /* Tablet - 768px and below */
 @media (max-width: 768px) {
     [data-testid="stSidebarNavLink"] {
