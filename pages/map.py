@@ -264,7 +264,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
         # Render with LineLayer
         r = pdk.Deck(
             layers=layers, 
-            map_style='road',
+            map_style='dark',
             initial_view_state=view_state, 
             tooltip={
                 "html": "<b>Ruta de Contaminación</b><br/><b>Tiempo:</b> {timestamp}<br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",

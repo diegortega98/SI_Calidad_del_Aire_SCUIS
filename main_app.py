@@ -12,7 +12,7 @@ load_css(css_path)
 
 # Add logo to sidebar
 
-dashboard_page = st.Page("pages/map.py", title="Mapa", icon=":material/map:")
+dashboard_page = st.Page("pages/map.py", title="Dashboard", icon=":material/map:")
 analytics_page = st.Page("pages/analytics.py", title="Análisis", icon=":material/analytics:")
 data_table_page = st.Page("pages/table.py", title="Datos", icon=":material/table_view:")
 
