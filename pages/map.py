@@ -354,55 +354,55 @@ def plot_map(df, selected_parameters, auto_refresh=False):
                 st.button("Leyenda", key="show_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
 
 
-    @st.fragment(run_every=5)
-    def auto_refresh_map(date_range, selected_routes, selected_parameters):
-        """Fragment that runs every 5 seconds when auto-refresh is enabled"""
-        import pandas as pd
+@st.fragment(run_every=5)
+def auto_refresh_map(date_range, selected_routes, selected_parameters):
+    """Fragment that runs every 5 seconds when auto-refresh is enabled"""
+    import pandas as pd
+    
+    # Re-query fresh data
+    fields = ["header_latitude", "header_longitude", "metrics_0_fields_CO2", "metrics_0_fields_PM2.5", "metrics_0_fields_Route", "header_deviceId"]
+    flux = flux_select(fields, start="-30d")
+    
+    try:
+        client = get_cached_client()
+        # Clear cache to get fresh data
+        st.cache_data.clear()
+        fresh_df = cached_query(flux)
         
-        # Re-query fresh data
-        fields = ["header_latitude", "header_longitude", "metrics_0_fields_CO2", "metrics_0_fields_PM2.5", "metrics_0_fields_Route", "header_deviceId"]
-        flux = flux_select(fields, start="-30d")
-        
-        try:
-            client = get_cached_client()
-            # Clear cache to get fresh data
-            st.cache_data.clear()
-            fresh_df = cached_query(flux)
+        if not fresh_df.empty:
+            # Convert routes to integers for better handling
+            if 'metrics_0_fields_Route' in fresh_df.columns:
+                fresh_df['route_int'] = pd.to_numeric(fresh_df['metrics_0_fields_Route'], errors='coerce')
             
-            if not fresh_df.empty:
-                # Convert routes to integers for better handling
-                if 'metrics_0_fields_Route' in fresh_df.columns:
-                    fresh_df['route_int'] = pd.to_numeric(fresh_df['metrics_0_fields_Route'], errors='coerce')
+            # Apply the same filters as main app
+            filtered_df = fresh_df.copy()
+            
+            # Apply date filter
+            if '_time' in fresh_df.columns and len(date_range) == 2:
+                start_date, end_date = date_range
+                filtered_df = filtered_df[
+                    (filtered_df['_time'].dt.date >= start_date) & 
+                    (filtered_df['_time'].dt.date <= end_date)
+                ]
+            
+            # Apply route filter
+            if 'route_int' in fresh_df.columns and selected_routes:
+                filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
+            
+            if not filtered_df.empty:
+                # Show refresh indicator
+                current_time = pd.Timestamp.now().strftime("%H:%M:%S")
+                st.caption(f"Última actualización: {current_time}")
                 
-                # Apply the same filters as main app
-                filtered_df = fresh_df.copy()
-                
-                # Apply date filter
-                if '_time' in fresh_df.columns and len(date_range) == 2:
-                    start_date, end_date = date_range
-                    filtered_df = filtered_df[
-                        (filtered_df['_time'].dt.date >= start_date) & 
-                        (filtered_df['_time'].dt.date <= end_date)
-                    ]
-                
-                # Apply route filter
-                if 'route_int' in fresh_df.columns and selected_routes:
-                    filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
-                
-                if not filtered_df.empty:
-                    # Show refresh indicator
-                    current_time = pd.Timestamp.now().strftime("%H:%M:%S")
-                    st.caption(f"Última actualización: {current_time}")
-                    
-                    # Plot the refreshed map
-                    plot_map(filtered_df, selected_parameters, auto_refresh=True)
-                else:
-                    st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
+                # Plot the refreshed map
+                plot_map(filtered_df, selected_parameters, auto_refresh=True)
             else:
-                st.warning("No hay datos disponibles para la actualización automática.")
-            
-        except Exception as e:
-            st.error(f"Error al actualizar mapa: {e}")
+                st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
+        else:
+            st.warning("No hay datos disponibles para la actualización automática.")
+        
+    except Exception as e:
+        st.error(f"Error al actualizar mapa: {e}")
 
 @st.fragment()
 def graphs(df):
@@ -434,7 +434,7 @@ def main():
     st.html("""
 
     <div class="hero-section">
-        <h1 style="margin: 0; font-size: 36px;">Mapa de rutas de transporte público</h1>
+        <h1 style="margin: 0; font-size: 36px;">Dashboard de Calidad del Aire</h1>
     </h2>
     </div>
     """)
@@ -478,9 +478,7 @@ def main():
             df['route_int'] = pd.to_numeric(df['metrics_0_fields_Route'], errors='coerce')
         
         
-        # Create a unique container for filters
-        filter_container = st.container(border=True)
-        with filter_container:
+        with st.sidebar:
             
             # Define available parameters (used across columns)
             available_parameters = {
@@ -503,73 +501,62 @@ def main():
                     "default": False
             }}
             
-            # Create filter columns
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                # Date filter
-                if '_time' in df.columns:
-                    min_date = df['_time'].min().date()
-                    max_date = df['_time'].max().date()
-                    
-                    date_range = st.date_input(
-                        "Seleccionar el rango de fechas:",
-                        value=(min_date, max_date),
-                        min_value=min_date,
-                        max_value=max_date,
-                        key="date_filter"
-                    )
-                else:
-                    st.info("No hay datos de fecha disponibles")
-            
-            with col2:
-                # Route filter
-                if 'route_int' in df.columns:
-                    unique_routes = df['route_int'].dropna().astype(int).unique()
-                    selected_routes = st.multiselect(
-                        "Seleccionar las rutas:",
-                        options=sorted(unique_routes),
-                        default=sorted(unique_routes),
-                        key="route_filter"
-                    )
-                else:
-                    st.info("No hay datos de ruta disponibles")
-            
-            with col3:
-                # Parameters filter - Multiselect
-                available_param_options = []
-                default_selected = []
+            auto_refresh_enabled = st.toggle(
+                "Actualizar en tiempo real (5s)",
+                value=False,
+                key="map_auto_refresh",
+            )
+
+            # Date filter
+            if '_time' in df.columns:
+                min_date = df['_time'].min().date()
+                max_date = df['_time'].max().date()
                 
-                for param_key, param_info in available_parameters.items():
-                    if param_info["column"] in df.columns:
-                        available_param_options.append(param_key)
-                        if param_info["default"]:
-                            default_selected.append(param_key)
-                
-                selected_param_keys = st.multiselect(
-                    "Parámetros a Mostrar:",
-                    options=available_param_options,
-                    default=default_selected,
-                    format_func=lambda x: available_parameters[x]["label"],
-                    key="parameters_filter",
-                    help="Selecciona los parámetros que deseas visualizar en el mapa"
+                date_range = st.date_input(
+                    "Seleccionar el rango de fechas:",
+                    value=(min_date, max_date),
+                    min_value=min_date,
+                    max_value=max_date,
+                    key="date_filter"
                 )
-                
-                # Convert to the expected format for compatibility
-                selected_parameters = {}
-                for param_key in available_parameters.keys():
-                    selected_parameters[param_key] = param_key in selected_param_keys
-            
-            # Auto-refresh toggle - in a separate row
-            col_refresh = st.columns([1, 3])[0]  # Use only first column for compact layout
-            with col_refresh:
-                auto_refresh_enabled = st.toggle(
-                    "Actualizar en tiempo real (5s)",
-                    value=False,
-                    key="map_auto_refresh",
-                    
-                )
+            else:
+                st.info("No hay datos de fecha disponibles")
         
+            # Route filter
+            if 'route_int' in df.columns:
+                unique_routes = df['route_int'].dropna().astype(int).unique()
+                selected_routes = st.multiselect(
+                    "Seleccionar las rutas:",
+                    options=sorted(unique_routes),
+                    default=sorted(unique_routes),
+                    key="route_filter"
+                )
+            else:
+                st.info("No hay datos de ruta disponibles")
+            
+            # Parameters filter - Multiselect
+            available_param_options = []
+            default_selected = []
+            
+            for param_key, param_info in available_parameters.items():
+                if param_info["column"] in df.columns:
+                    available_param_options.append(param_key)
+                    if param_info["default"]:
+                        default_selected.append(param_key)
+            
+            selected_param_keys = st.multiselect(
+                "Parámetros a Mostrar:",
+                options=available_param_options,
+                default=default_selected,
+                format_func=lambda x: available_parameters[x]["label"],
+                key="parameters_filter",
+                help="Selecciona los parámetros que deseas visualizar en el mapa"
+            )
+            
+            # Convert to the expected format for compatibility
+            selected_parameters = {}
+            for param_key in available_parameters.keys():
+                selected_parameters[param_key] = param_key in selected_param_keys
        
         
         # Apply filters and show filtered map
