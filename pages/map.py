@@ -18,7 +18,7 @@ def cached_query(flux: str):
     return run_query(client, flux)
 
 @st.fragment()
-def plot_map(df, selected_parameters, auto_refresh=False):
+def plot_map(df, selected_parameters, auto_refresh=False, selected_aqi_categories=None):
     import pandas as pd
     import pydeck as pdk
 
@@ -117,35 +117,61 @@ def plot_map(df, selected_parameters, auto_refresh=False):
             df_sorted = df.copy()
         
         # Create paths between consecutive points
+        # Show all paths but make non-selected AQI categories transparent
         for i in range(len(df_sorted) - 1):
             current_point = df_sorted.iloc[i]
             next_point = df_sorted.iloc[i + 1]
             
-            # Get PM2.5 color for the path (using current point's color)
-            if 'pm25_color' in df.columns:
-                color = current_point['pm25_color']
-                # Ensure color is in the right format [R, G, B, A]
-                if isinstance(color, list) and len(color) >= 3:
-                    path_color = [color[0], color[1], color[2], 200]
-                else:
-                    path_color = [0, 228, 0, 200]  # Default green
-            else:
-                path_color = [0, 228, 0, 200]  # Default green
+            # Check time gap to avoid unrealistic jumps
+            include_segment = True
+            if '_time' in df.columns:
+                time_diff = (next_point['_time'] - current_point['_time']).total_seconds()
+                # Only connect points that are within reasonable time (60 seconds)
+                if time_diff > 60:
+                    include_segment = False
             
-            path = {
-                'start_lon': current_point['header_longitude'],
-                'start_lat': current_point['header_latitude'],
-                'end_lon': next_point['header_longitude'],
-                'end_lat': next_point['header_latitude'],
-                'R': path_color[0],
-                'G': path_color[1],
-                'B': path_color[2],
-                'pm25_category': current_point.get('pm25_category', 'No disponible'),
-                'co2_value': current_point.get('co2_value', 0),
-                'pm25_value': current_point.get('pm25_value', 0),
-                'timestamp': current_point.get('_time', '').strftime('%Y-%m-%d %H:%M:%S') if pd.notna(current_point.get('_time', '')) else 'No disponible'
-            }
-            paths_data.append(path)
+            if include_segment:
+                # Get PM2.5 color for the path (using current point's color)
+                if 'pm25_color' in df.columns:
+                    color = current_point['pm25_color']
+                    # Ensure color is in the right format [R, G, B, A]
+                    if isinstance(color, list) and len(color) >= 3:
+                        base_color = [color[0], color[1], color[2]]
+                    else:
+                        base_color = [0, 228, 0]  # Default green
+                else:
+                    base_color = [0, 228, 0]  # Default green
+                
+                # Determine transparency based on AQI category selection
+                current_category = current_point.get('pm25_category', 'No disponible')
+                
+                # If AQI categories are selected and this category is not in the selection, make it transparent
+                if selected_aqi_categories is not None and len(selected_aqi_categories) > 0:
+                    if current_category in selected_aqi_categories:
+                        # Selected category - full opacity
+                        path_color = base_color + [200]
+                    else:
+                        # Non-selected category - very transparent
+                        path_color = base_color + [30]
+                else:
+                    # No AQI filter applied - full opacity
+                    path_color = base_color + [200]
+                
+                path = {
+                    'start_lon': current_point['header_longitude'],
+                    'start_lat': current_point['header_latitude'],
+                    'end_lon': next_point['header_longitude'],
+                    'end_lat': next_point['header_latitude'],
+                    'R': path_color[0],
+                    'G': path_color[1],
+                    'B': path_color[2],
+                    'A': path_color[3],  # Include alpha for transparency
+                    'pm25_category': current_point.get('pm25_category', 'No disponible'),
+                    'co2_value': current_point.get('co2_value', 0),
+                    'pm25_value': current_point.get('pm25_value', 0),
+                    'timestamp': current_point.get('_time', '').strftime('%Y-%m-%d %H:%M:%S') if pd.notna(current_point.get('_time', '')) else 'No disponible'
+                }
+                paths_data.append(path)
     
     # Initialize layers list
     layers = []
@@ -227,7 +253,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
                 data=paths_df,
                 get_source_position='[start_lon, start_lat]',
                 get_target_position='[end_lon, end_lat]',
-                get_color='[R, G, B, 200]',
+                get_color='[R, G, B, A]',  # Use alpha from data for transparency
                 get_width=10,
                 highlight_color=[0, 0, 255],
                 picking_radius=10,
@@ -279,7 +305,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
 
 
 @st.fragment(run_every=5)
-def auto_refresh_map(date_range, selected_routes, selected_parameters):
+def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories=None):
     """Fragment that runs every 5 seconds when auto-refresh is enabled"""
     import pandas as pd
     
@@ -319,7 +345,7 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters):
                 st.caption(f"Última actualización: {current_time}")
                 
                 # Plot the refreshed map
-                plot_map(filtered_df, selected_parameters, auto_refresh=True)
+                plot_map(filtered_df, selected_parameters, auto_refresh=True, selected_aqi_categories=selected_aqi_categories)
             else:
                 st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
         else:
@@ -477,6 +503,47 @@ def main():
                     key="map_auto_refresh",
                     
                 )
+            
+            # AQI Category Filter - new row
+            selected_aqi_categories = None
+            if 'metrics_0_fields_PM2.5' in df.columns:
+                
+                # Define AQI categories with colors
+                AQI_CATEGORIES = [
+                    ("Buena", "#00e400"),
+                    ("Moderada", "#ffff00"),
+                    ("Dañina para sensibles", "#ff7e00"),
+                    ("Dañina", "#ff0000"),
+                    ("Muy dañina", "#8f3f97"),
+                    ("Peligrosa", "#7e0023")
+                ]
+                
+                # Get available categories from data
+                df_with_aqi = df.copy()
+                PM25_THRESHOLDS = [
+                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                ]
+                
+                def get_aqi_category(pm25_value):
+                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                        if low <= pm25_value <= high:
+                            return category
+                    return PM25_THRESHOLDS[-1][4]
+                
+                df_with_aqi['aqi_category'] = df_with_aqi['metrics_0_fields_PM2.5'].apply(get_aqi_category)
+                available_aqi_categories = df_with_aqi['aqi_category'].unique().tolist()
+                
+                # Create multiselect for AQI categories
+                selected_aqi_categories = st.multiselect(
+                    "Seleccionar categorías ICA:",
+                    options=available_aqi_categories,
+                    default=available_aqi_categories,
+                    key="aqi_category_filter"                )
         
        
         
@@ -498,6 +565,19 @@ def main():
             if 'route_int' in df.columns and selected_routes:
                 filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
             
+            # Apply AQI category filter
+            # Don't filter data completely - just pass the selection to plot_map for transparency
+            if selected_aqi_categories is not None and 'metrics_0_fields_PM2.5' in filtered_df.columns:
+                # Add AQI category to filtered_df for display purposes only
+                def get_aqi_category_for_filter(pm25_value):
+                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                        if low <= pm25_value <= high:
+                            return category
+                    return PM25_THRESHOLDS[-1][4]
+                
+                filtered_df['aqi_category'] = filtered_df['metrics_0_fields_PM2.5'].apply(get_aqi_category_for_filter)
+                # Don't filter the data - let plot_map handle transparency
+            
             # Filter data based on selected parameters (keep all data but note selection for display)
             # Parameters selection affects tooltip and display, not data filtering
             display_columns = []
@@ -514,10 +594,10 @@ def main():
                 # Handle auto-refresh mode
                 if auto_refresh_enabled:
                     # Use the auto-refresh fragment
-                    auto_refresh_map(date_range, selected_routes, selected_parameters)
+                    auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories)
                 else:
-                    # Use the normal static map
-                    plot_map(filtered_df, selected_parameters, auto_refresh=False)
+                    # Use the normal static map - pass original data with AQI selection for transparency
+                    plot_map(filtered_df, selected_parameters, auto_refresh=False, selected_aqi_categories=selected_aqi_categories)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
