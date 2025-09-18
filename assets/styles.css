@@ -2,7 +2,200 @@
    ESSENTIAL STYLES FOR STREAMLIT COMPONENTS
    ============================================ */
 
-/* Main App Header */
+/* Global Variables */
+
+:root {
+    --primary: #63e07f;
+    --primaryLight: #ffba43;
+    --secondary: #f1f1f1;
+    --secondaryLight: #ffba43;
+    --headerColor: #1a1a1a;
+    --bodyTextColor: #1a1a1a;
+    --bodyTextColorWhite: #fafbfc;
+    /* 13px - 16px */
+    --topperFontSize: clamp(0.8125rem, 1.6vw, 1rem);
+    /* 31px - 49px */
+    --headerFontSize: clamp(1.9375rem, 3.9vw, 3.0625rem);
+    --bodyFontSize: 1rem;
+    /* 60px - 100px top and bottom */
+    --sectionPadding: clamp(3.75rem, 7.82vw, 6.25rem) 1rem;
+}
+
+@media screen and (min-width: 1101px) {
+    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 1100px) {
+    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
+    font-size: 10px;
+  }
+}
+
+.mydiv {
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+/* ============================================
+   MAP STYLES
+   ============================================ */
+
+@media screen and (min-width: 1101px) {
+    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 1100px) {
+    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
+    font-size: 10px;
+  }
+}
+
+.mydiv {
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+.st-key-reload button {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.st-key-map_container{
+    position: relative;
+    z-index: 0;
+    padding: 12px;
+    background-color: white;
+    border-radius:12px;
+    max-height:530px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.st-key-map_auto_refresh{
+    position: relative;
+    z-index: 0;
+    padding: 12px;
+    background-color: #F1F1F1;
+    border-radius:12px;
+}
+
+.st-key-map_controls{
+    position: absolute;
+    opacity: 0.7;
+    display: flex;
+    padding: 5px 5px 5px 5px;
+    max-width: 350px;
+    min-width: 230px;
+    min-height: 250px;
+    width: 50%;
+    height: max-content;
+    backdrop-filter: blur(15.4px);
+    -webkit-backdrop-filter: blur(15.4px);
+    top: 2%;
+    left: .5%;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    background-color: rgba(138, 138, 138, 0.4);
+    border-radius: 12px;
+    z-index: 2;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+.st-key-map_controls:hover{
+    opacity: 1.0;
+}
+
+.st-key-toggle_map_controls{
+    border-radius: 12px;
+    z-index: 2;
+}
+
+.st-key-reload_data{
+    border-radius: 12px;
+    z-index: 2;
+}
+
+.st-key-hidden_map_controls{
+    position: absolute; /* <-- Ahora se posiciona respecto al contenedor */
+    opacity: 0.7;
+    max-width: 300px;
+    min-width: 120px;
+    min-height: 40px;
+    width: 5%;
+    height: 10%;
+    top: 2%;
+    left: .5%;
+    backdrop-filter: blur(15.4px);
+    -webkit-backdrop-filter: blur(15.4px);
+    background-color: rgba(138, 138, 138, 0.4);
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    border-radius: 12px;
+    z-index: 2;
+    justify-content: center; /* horizontal */
+    align-items: center;
+}
+
+.st-key-hidden_map_controls:hover{
+    opacity: 1.0;
+}
+
+.st-key-graphs {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.st-key-graph1{
+    flex: 50%;
+    overflow: hidden;
+}
+
+.st-key-graph2{
+    flex: 50%;
+    overflow: hidden;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .st-key-graphs {
+    flex-wrap: wrap;
+  }
+}
+
+[data-testid="stHorizontalBlock"] {
+    filter: drop-shadow(2px 2px 2px gray);
+    padding: 20px 20px 20px 20px;
+    background-color: white;
+    border-radius: 12px;
+}
+
+[data-testid="stSidebarContent"] {
+    background: white; 
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
+    border-radius: 0px;
+}
+
 header.stAppHeader {
     background: rgba(0, 0, 0, 0);
 }
@@ -11,473 +204,10 @@ header.stAppHeader {
     padding-top: 0.2rem;
 }
 
-/* Sidebar toggle button styling - only affects header icons */
-header [data-testid="stIconMaterial"] {
-    color: #28a745 !important;
-    stroke: #28a745 !important;
-    stroke-width: 1.5px !important;
-    filter: drop-shadow(0 1px 2px rgba(40, 167, 69, 0.3)) !important;
-    background-color: rgba(255, 255, 255, 0.411) !important;
-    border-radius: 6px !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-header [data-testid="stIconMaterial"]:hover {
-    color: #c6ced6 !important;
-    stroke: #1e7e34 !important;
-    stroke-width: 2px !important;
-    filter: drop-shadow(0 2px 4px rgba(30, 126, 52, 0.4)) !important;
-    background-color: white !important;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* ============================================
-   SIDEBAR GRADIENT BACKGROUND & NAVIGATION
-   ============================================ */
-
-[data-testid="stSidebarContent"] {
-    background: linear-gradient(180deg, #28a745 0%, #5cb85c 100%); 
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
-    border-radius: 0px;
-    position: relative;
-}
-
-/* Add a subtle overlay for better text readability */
-[data-testid="stSidebarContent"]::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Style sidebar text elements for better contrast */
-[data-testid="stSidebarContent"] .stMarkdown {
-    color: white !important;
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    font-weight: 500;
-}
-
-[data-testid="stSidebarContent"] .stMarkdown h1,
-[data-testid="stSidebarContent"] .stMarkdown h2,
-[data-testid="stSidebarContent"] .stMarkdown h3 {
-    color: white !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    font-weight: 600;
-}
-
-[data-testid="stSidebarContent"] label {
-    color: white !important;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    font-size: 14px;
-}
-
-/* ============================================
-   SIDEBAR NAVIGATION LINKS STYLING
-   ============================================ */
-
-[data-testid="stSidebarNav"] {
-    padding: 0;
-    margin: 10px 0;
-}
-
-[data-testid="stSidebarNav"] ul {
-    list-style: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-[data-testid="stSidebarNav"] li {
-    margin: 6px 0 !important;
-}
-
-[data-testid="stSidebarNavLink"] {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    padding: 10px 12px !important;
-    color: white !important;
-    text-decoration: none !important;
-    border-radius: 10px !important;
-    margin: 10px 8px !important;
-    transition: all 0.3s ease !important;
-    background: rgba(255, 255, 255, 0.15) !important;
-    border: 2px solid rgba(255, 255, 255, 0.25) !important;
-    font-weight: 500 !important;
-    font-size: 20px !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    gap: 10px !important;
-    text-align: left !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-}
-
-[data-testid="stSidebarNavLink"]:hover {
-    background: rgba(255, 255, 255, 0.25) !important;
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    transform: translateX(6px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-[data-testid="stSidebarNavLink"][aria-selected="true"],
-[data-testid="stSidebarNavLink"][data-selected="true"] {
-    background: rgba(255, 255, 255, 0.35) !important;
-    border-color: rgba(255, 255, 255, 0.6) !important;
-    font-weight: 700 !important;
-    transform: translateX(8px) !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* Style navigation icons with minimal spacing */
-[data-testid="stSidebarNavLink"] svg {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
-    flex-shrink: 0 !important;
-    width: 10px !important;
-    height: 10px !important;
-    margin: 0 2px 0 0 !important;
-    padding: 0 !important;
-}
-
-[data-testid="stSidebarNavLink"] [data-testid="stIcon"] {
-    margin: 10px 2px 0 0 !important;
-    padding: 0 !important;
-    width: 14px !important;
-    height: 14px !important;
-}
-
-/* Force minimal spacing in all text elements */
-[data-testid="stSidebarNavLink"] span,
-[data-testid="stSidebarNavLink"] p {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Ensure icon and text containers are left aligned with minimal spacing */
-[data-testid="stSidebarNavLink"] > div,
-[data-testid="stSidebarNavLink"] > span {
-    align-items: left !important;
-    width: fit-content !important;
-    text-align: left !important;
-    overflow: visible !important;    
-}
-
-/* Style navigation text spans */
-[data-testid="stSidebarNavLink"] span,
-[data-testid="stSidebarNavLink"] p,
-[data-testid="stSidebarNavLink"] div,
-[data-testid="stSidebarNavLink"] * {
-    color: white !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-    font-weight: inherit !important;
-    font-size: inherit !important;
-}
-
-/* ============================================
-   SIDEBAR WIDGETS & INPUTS STYLING
-   ============================================ */
-
-/* Style sidebar buttons */
-[data-testid="stSidebarContent"] .stButton button {
-    background: rgba(255, 255, 255, 0.95) !important;
-    color: #333 !important;
-    border: 2px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-    backdrop-filter: blur(10px) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-[data-testid="stSidebarContent"] .stButton button:hover {
-    background: rgba(255, 255, 255, 1) !important;
-    border-color: rgba(255, 255, 255, 1) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Style sidebar input fields */
-[data-testid="stSidebarContent"] .stSelectbox > div > div,
-[data-testid="stSidebarContent"] .stTextInput > div > div > input,
-[data-testid="stSidebarContent"] .stNumberInput > div > div > input {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 2px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 6px !important;
-    color: #333 !important;
-    font-weight: 500 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-[data-testid="stSidebarContent"] .stSelectbox > div > div:focus-within,
-[data-testid="stSidebarContent"] .stTextInput > div > div > input:focus,
-[data-testid="stSidebarContent"] .stNumberInput > div > div > input:focus {
-    border-color: rgba(255, 255, 255, 1) !important;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3) !important;
-}
-
-/* ============================================
-   HOME PAGE STYLES
-   ============================================ */
-
-.hero-section {
-    background: #28a745;
-    color: white;
-    padding: 20px;
-    border-radius: 15px;
+.st-key-app_title .stHeading {
     text-align: center;
-    margin: 10px 0;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    
 }
 
-/* Home page navigation buttons styling */
-.stButton > button {
-    background: #f8f9fa !important;
-    color: #333 !important;
-    border: 1px solid #dee2e6 !important;
-    border-radius: 8px !important;
-    padding: 12px 20px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-}
-
-.stButton > button:hover {
-    background: #34ce57 !important;
-    color: white !important;
-    border-color: #5cb85c !important;
-    cursor: pointer !important;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-/* Tablet - 768px and below */
-@media (max-width: 768px) {
-    [data-testid="stSidebarNavLink"] {
-        padding: 8px 10px !important;
-        margin: 4px 6px !important;
-        font-size: 13px !important;
-        gap: 1px !important;
-    }
-    
-    .hero-section {
-        padding: 15px;
-        margin: 5px 0;
-    }
-}
-
-/* Mobile - 480px and below */
-@media (max-width: 480px) {
-    [data-testid="stSidebarNavLink"] {
-        padding: 6px 8px !important;
-        margin: 2px 4px !important;
-        font-size: 12px !important;
-        gap: 0px !important;
-    }
-    
-    .hero-section {
-        padding: 10px;
-        border-radius: 8px;
-    }
-    
-    .hero-section h1 {
-        font-size: 24px !important;
-        line-height: 1.2;
-    }
-    
-    .hero-section h2 {
-        font-size: 16px !important;
-        margin: 8px 0 0 0 !important;
-    }
-    
-    .hero-section p {
-        font-size: 14px !important;
-        margin: 15px 0 0 0 !important;
-    }
-}
-
-
-
-/* ============================================
-   FILTER PANEL STYLES
-   ============================================ */
-
-/* Filter container styling */
-.stContainer > div:first-child {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
-    backdrop-filter: blur(15px) !important;
-    -webkit-backdrop-filter: blur(15px) !important;
-    border-radius: 15px !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    padding: 25px !important;
-    margin: 20px 0 !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Date input styling */
-
-/*Date picker container*/
-.stDateInput > div *  {
-    background-color: #28a745 !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-    color: white !important;
-}
-
-
-
-/* Calendar popup container */
-div[role="presentation"]  {
-    background: #28a745;
-    padding: 8px !important;
-}
-
-div[role="presentation"] > div {
-    color: white !important;
-}
-
-div[data-baseweb="calendar"][aria-roledescription="datepicker"]
-  div:has(> button[aria-label="Previous month."]) {
-  background-color: #28a745 !important;  /* tu color */
-  color: #fff !important;
-  border-top-left-radius: 12px !important;
-  border-top-right-radius: 12px !important;
-  /* opcional: padding para cubrir bordes */
-  padding: 4px 6px !important;
-}
-
-div[data-baseweb="calendar"][aria-roledescription="datepicker"]
-  div:has(> button[aria-label="Previous month."]) button {
-  background: transparent !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
-div[data-baseweb="popover"] [data-baseweb="menu"] li[role="option"] {
-  padding: 6px 12px !important;
-  cursor: pointer;
-}
-
-/* opción normal */
-div[data-baseweb="popover"] [data-baseweb="menu"] li[role="option"]:not([aria-disabled="true"]) {
-  color: #fff !important;
-}
-
-/* opción deshabilitada */
-div[data-baseweb="popover"] [data-baseweb="menu"] li[aria-disabled="true"] {
-  color: #aaa !important;
-}
-
-/* opción activa / seleccionada */
-div[data-baseweb="popover"] [data-baseweb="menu"] li[aria-selected="true"],
-div[data-baseweb="popover"] [data-baseweb="menu"] li[aria-activedescendant] {
-  background: #1867C0 !important;
-  color: #fff !important;
-}
-
-
-/* Multiselect styling */
-.stMultiSelect > div > div > div {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
-}
-
-.stMultiSelect > div > div > div > div {
-    color: white !important;
-}
-
-/* Selected tags in multiselect */
-.stMultiSelect span {
-    background: rgba(74, 144, 226, 1) !important;
-    color: white !important;
-    border-radius: 8px !important;
-    border: none !important;
-}
-
-/* Dropdown options */
-.stMultiSelect [data-baseweb="select"] {
-    background: rgba(255, 255, 255, 1) !important;
-    border-radius: 8px !important;
-    border: 1px solid #1e7e34 !important;
-    
-}
-
-/* Filter labels styling */
-.stMarkdown p {
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-weight: 600 !important;
-}
-
-/* Info messages styling */
-.stInfo {
-    background: rgba(74, 144, 226, 0.2) !important;
-    border: 1px solid rgba(74, 144, 226, 0.4) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 8px !important;
-}
-
-/* ============================================
-   PARAMETER EXPANDER STYLES
-   ============================================ */
-
-/* Expander container styling */
-.stExpander {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 8px !important;
-    backdrop-filter: blur(10px) !important;
-}
-
-/* Expander header styling */
-.stExpander > div:first-child {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px 8px 0 0 !important;
-    transition: all 0.3s ease !important;
-}
-
-.stExpander > div:first-child:hover {
-    background: rgba(74, 144, 226, 0.2) !important;
-}
-
-/* Expander header text */
-.stExpander > div:first-child p {
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-weight: 600 !important;
-    margin: 0 !important;
-}
-
-/* Expander content area */
-.stExpander > div:last-child {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 0 0 8px 8px !important;
-    padding: 15px !important;
-}
-
-/* Checkboxes inside expander */
-.stExpander .stCheckbox {
-    margin-bottom: 8px !important;
-}
-
-.stExpander .stCheckbox label {
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-weight: 500 !important;
-}
-
-/* Caption text in expander */
-.stExpander .stCaption {
-    color: rgba(255, 255, 255, 0.7) !important;
-    font-size: 12px !important;
-    margin-top: 10px !important;
-    text-align: center !important;
-    font-weight: 500 !important;
+.st-key-app_title{
+    left: 40px
 }

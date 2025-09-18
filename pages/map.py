@@ -4,6 +4,10 @@ import time
 from data.connection import get_client_or_raise, run_query, flux_select, ConnectionNotReady
 from influxdb_client import InfluxDBClient
 import pydeck as pdk
+
+if "map_controls" not in st.session_state:
+    st.session_state.map_controls = True
+
 # Cachea el cliente .
 @st.cache_resource(show_time=True,show_spinner=False)
 def get_cached_client() -> InfluxDBClient:
@@ -18,144 +22,121 @@ def cached_query(flux: str):
     return run_query(client, flux)
 
 @st.fragment()
-def plot_map(df, selected_parameters, auto_refresh=False, selected_aqi_categories=None):
-    import pandas as pd
-    import pydeck as pdk
+def plot_map(df, selected_parameters, auto_refresh=False):
+    with st.container(key="map_container"):
 
-    # Filtrar datos inválidos
-    df = df.dropna(subset=['header_latitude', 'header_longitude'])
+        import pandas as pd
+        import pydeck as pdk
+
+        # Filtrar datos inválidos
+        df = df.dropna(subset=['header_latitude', 'header_longitude'])
 
 
-    if df.empty:
-        st.warning("No hay datos válidos para mostrar en el mapa.")
-        return
+        if df.empty:
+            st.warning("No hay datos válidos para mostrar en el mapa.")
+            return
 
-    # Crear columna layer como la media de los valores de contaminación
-    pollution_columns = ['metrics_0_fields_CO2', 'metrics_0_fields_PM2.5']
-    
-    # Verificar que las columnas existen y calcular la media
-    available_columns = [col for col in pollution_columns if col in df.columns]
-    
-    if available_columns:
-        # Calcular la media de las columnas de contaminación disponibles
-        df = df.copy()
-        df['layer'] = df[available_columns].mean(axis=1, skipna=True)
+        # Crear columna layer como la media de los valores de contaminación
+        pollution_columns = ['metrics_0_fields_CO2', 'metrics_0_fields_PM2.5']
         
-        # Usar PM2.5 para el tamaño si está disponible
-        if 'metrics_0_fields_PM2.5' in df.columns:
-            df['pm25_size'] = df['metrics_0_fields_PM2.5']
+        # Verificar que las columnas existen y calcular la media
+        available_columns = [col for col in pollution_columns if col in df.columns]
+        
+        if available_columns:
+            # Calcular la media de las columnas de contaminación disponibles
+            df = df.copy()
+            df['layer'] = df[available_columns].mean(axis=1, skipna=True)
             
-            # Umbrales de PM2.5 según EPA AQI
-            PM25_THRESHOLDS = [
-                (0.0, 12.0, 0, 50, "Buena", "#00e400"),
-                (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
-                (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
-                (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
-                (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
-                (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
-            ]
-            
-            def get_pm25_color_and_category(pm25_value):
-                for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
-                    if low <= pm25_value <= high:
-                        # Convertir hex a RGB con transparencia
-                        r = int(color_hex[1:3], 16)
-                        g = int(color_hex[3:5], 16)
-                        b = int(color_hex[5:7], 16)
-                        return [r, g, b, 180], category
-                # Si está fuera de rango, usar el último threshold
-                r = int(PM25_THRESHOLDS[-1][5][1:3], 16)
-                g = int(PM25_THRESHOLDS[-1][5][3:5], 16)
-                b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
-                return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
-            
-            # Aplicar colores y categorías
-            df[['pm25_color', 'pm25_category']] = df['metrics_0_fields_PM2.5'].apply(
-                lambda x: pd.Series(get_pm25_color_and_category(x))
-            )
-            
-            # Crear columnas para el tooltip
-            df['co2_value'] = df.get('metrics_0_fields_CO2', 0).round(1)
-            df['pm25_value'] = df['metrics_0_fields_PM2.5'].round(1)
+            # Usar PM2.5 para el tamaño si está disponible
+            if 'metrics_0_fields_PM2.5' in df.columns:
+                df['pm25_size'] = df['metrics_0_fields_PM2.5']
+                
+                # Umbrales de PM2.5 según EPA AQI
+                PM25_THRESHOLDS = [
+                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                ]
+                
+                def get_pm25_color_and_category(pm25_value):
+                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                        if low <= pm25_value <= high:
+                            # Convertir hex a RGB con transparencia
+                            r = int(color_hex[1:3], 16)
+                            g = int(color_hex[3:5], 16)
+                            b = int(color_hex[5:7], 16)
+                            return [r, g, b, 180], category
+                    # Si está fuera de rango, usar el último threshold
+                    r = int(PM25_THRESHOLDS[-1][5][1:3], 16)
+                    g = int(PM25_THRESHOLDS[-1][5][3:5], 16)
+                    b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
+                    return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
+                
+                # Aplicar colores y categorías
+                df[['pm25_color', 'pm25_category']] = df['metrics_0_fields_PM2.5'].apply(
+                    lambda x: pd.Series(get_pm25_color_and_category(x))
+                )
+                
+                # Crear columnas para el tooltip
+                df['co2_value'] = df.get('metrics_0_fields_CO2', 0).round(1)
+                df['pm25_value'] = df['metrics_0_fields_PM2.5'].round(1)
+            else:
+                df['pm25_size'] = df['layer']  # Fallback a la media general
+                df['pm25_color'] = [[255, 255, 0, 180]] * len(df)  # Color amarillo por defecto
+                df['pm25_category'] = ['No disponible'] * len(df)  # Categoría por defecto
+                df['co2_value'] = df.get('metrics_0_fields_CO2', 0).round(1)
+                df['pm25_value'] = [0] * len(df)
         else:
-            df['pm25_size'] = df['layer']  # Fallback a la media general
+            # Valores por defecto si no hay columnas de contaminación
+            df['layer'] = 100
+            df['pm25_size'] = 100
             df['pm25_color'] = [[255, 255, 0, 180]] * len(df)  # Color amarillo por defecto
             df['pm25_category'] = ['No disponible'] * len(df)  # Categoría por defecto
-            df['co2_value'] = df.get('metrics_0_fields_CO2', 0).round(1)
+            df['co2_value'] = [0] * len(df)
             df['pm25_value'] = [0] * len(df)
-    else:
-        # Valores por defecto si no hay columnas de contaminación
-        df['layer'] = 100
-        df['pm25_size'] = 100
-        df['pm25_color'] = [[255, 255, 0, 180]] * len(df)  # Color amarillo por defecto
-        df['pm25_category'] = ['No disponible'] * len(df)  # Categoría por defecto
-        df['co2_value'] = [0] * len(df)
-        df['pm25_value'] = [0] * len(df)
 
-    # Calculate contamination mean for height
-    # Create contamination_mean column combining CO2 and PM2.5
-    if 'metrics_0_fields_CO2' in df.columns and 'metrics_0_fields_PM2.5' in df.columns:
-        # Normalize values to similar scales for meaningful average
-        # CO2 typically ranges 400-2000 ppm, PM2.5 ranges 0-500 μg/m³
-        co2_normalized = df['metrics_0_fields_CO2'] / 10  # Scale down CO2
-        pm25_normalized = df['metrics_0_fields_PM2.5']    # Keep PM2.5 as is
-        df['contamination_mean'] = (co2_normalized + pm25_normalized) / 2
-    elif 'metrics_0_fields_PM2.5' in df.columns:
-        df['contamination_mean'] = df['metrics_0_fields_PM2.5']
-    elif 'metrics_0_fields_CO2' in df.columns:
-        df['contamination_mean'] = df['metrics_0_fields_CO2'] / 10
-    else:
-        df['contamination_mean'] = 50  # Default value
-
-    # Create paths data if there are 2 or more records
-    paths_data = []
-    if len(df) >= 2:
-        # Sort by time to create logical path sequence
-        if '_time' in df.columns:
-            df_sorted = df.sort_values('_time')
+        # Calculate contamination mean for height
+        # Create contamination_mean column combining CO2 and PM2.5
+        if 'metrics_0_fields_CO2' in df.columns and 'metrics_0_fields_PM2.5' in df.columns:
+            # Normalize values to similar scales for meaningful average
+            # CO2 typically ranges 400-2000 ppm, PM2.5 ranges 0-500 μg/m³
+            co2_normalized = df['metrics_0_fields_CO2'] / 10  # Scale down CO2
+            pm25_normalized = df['metrics_0_fields_PM2.5']    # Keep PM2.5 as is
+            df['contamination_mean'] = (co2_normalized + pm25_normalized) / 2
+        elif 'metrics_0_fields_PM2.5' in df.columns:
+            df['contamination_mean'] = df['metrics_0_fields_PM2.5']
+        elif 'metrics_0_fields_CO2' in df.columns:
+            df['contamination_mean'] = df['metrics_0_fields_CO2'] / 10
         else:
-            df_sorted = df.copy()
-        
-        # Create paths between consecutive points
-        # Show all paths but make non-selected AQI categories transparent
-        for i in range(len(df_sorted) - 1):
-            current_point = df_sorted.iloc[i]
-            next_point = df_sorted.iloc[i + 1]
-            
-            # Check time gap to avoid unrealistic jumps
-            include_segment = True
+            df['contamination_mean'] = 50  # Default value
+
+        # Create paths data if there are 2 or more records
+        paths_data = []
+        if len(df) >= 2:
+            # Sort by time to create logical path sequence
             if '_time' in df.columns:
-                time_diff = (next_point['_time'] - current_point['_time']).total_seconds()
-                # Only connect points that are within reasonable time (60 seconds)
-                if time_diff > 60:
-                    include_segment = False
+                df_sorted = df.sort_values('_time')
+            else:
+                df_sorted = df.copy()
             
-            if include_segment:
+            # Create paths between consecutive points
+            for i in range(len(df_sorted) - 1):
+                current_point = df_sorted.iloc[i]
+                next_point = df_sorted.iloc[i + 1]
+                
                 # Get PM2.5 color for the path (using current point's color)
                 if 'pm25_color' in df.columns:
                     color = current_point['pm25_color']
                     # Ensure color is in the right format [R, G, B, A]
                     if isinstance(color, list) and len(color) >= 3:
-                        base_color = [color[0], color[1], color[2]]
+                        path_color = [color[0], color[1], color[2], 200]
                     else:
-                        base_color = [0, 228, 0]  # Default green
+                        path_color = [0, 228, 0, 200]  # Default green
                 else:
-                    base_color = [0, 228, 0]  # Default green
-                
-                # Determine transparency based on AQI category selection
-                current_category = current_point.get('pm25_category', 'No disponible')
-                
-                # If AQI categories are selected and this category is not in the selection, make it transparent
-                if selected_aqi_categories is not None and len(selected_aqi_categories) > 0:
-                    if current_category in selected_aqi_categories:
-                        # Selected category - full opacity
-                        path_color = base_color + [200]
-                    else:
-                        # Non-selected category - very transparent
-                        path_color = base_color + [30]
-                else:
-                    # No AQI filter applied - full opacity
-                    path_color = base_color + [200]
+                    path_color = [0, 228, 0, 200]  # Default green
                 
                 path = {
                     'start_lon': current_point['header_longitude'],
@@ -165,143 +146,212 @@ def plot_map(df, selected_parameters, auto_refresh=False, selected_aqi_categorie
                     'R': path_color[0],
                     'G': path_color[1],
                     'B': path_color[2],
-                    'A': path_color[3],  # Include alpha for transparency
                     'pm25_category': current_point.get('pm25_category', 'No disponible'),
                     'co2_value': current_point.get('co2_value', 0),
                     'pm25_value': current_point.get('pm25_value', 0),
                     'timestamp': current_point.get('_time', '').strftime('%Y-%m-%d %H:%M:%S') if pd.notna(current_point.get('_time', '')) else 'No disponible'
                 }
                 paths_data.append(path)
-    
-    # Initialize layers list
-    layers = []
-    
-    # Add heatmap layers based on selected parameters
-    if selected_parameters and isinstance(selected_parameters, dict):
         
-        # CO2 Heatmap Layer
-        if selected_parameters.get('CO2', False) and 'metrics_0_fields_CO2' in df.columns:
-            co2_data = df.dropna(subset=['metrics_0_fields_CO2']).copy()
-            if not co2_data.empty:
-                # Normalize CO2 values for better visualization (0-1 range)
-                co2_min = co2_data['metrics_0_fields_CO2'].min()
-                co2_max = co2_data['metrics_0_fields_CO2'].max()
-                if co2_max > co2_min:
-                    co2_data['weight'] = (co2_data['metrics_0_fields_CO2'] - co2_min) / (co2_max - co2_min)
-                else:
-                    co2_data['weight'] = 0.5
-                
-                co2_heatmap = pdk.Layer(
-                    'HeatmapLayer',
-                    data=co2_data,
-                    get_position='[header_longitude, header_latitude]',
-                    get_weight='weight',
-                    radius_pixels=80,
-                    opacity=0.5,
-                    color_range=[
-                        [0, 255, 0],      # Green (low CO2)
-                        [255, 255, 0],    # Yellow
-                        [255, 165, 0],    # Orange
-                        [255, 0, 0],      # Red (high CO2)
-                        [139, 0, 0],      # Dark red
-                        [75, 0, 130]      # Purple (very high)
-                    ],
-                    pickable=False
-                )
-                layers.append(co2_heatmap)
+        # Initialize layers list
+        layers = []
         
-        # Temperature Heatmap Layer
-        if selected_parameters.get('Temp', False) and 'metrics_0_fields_Temperature' in df.columns:
-            temp_data = df.dropna(subset=['metrics_0_fields_Temperature']).copy()
-            if not temp_data.empty:
-                # Normalize temperature values for better visualization (0-1 range)
-                temp_min = temp_data['metrics_0_fields_Temperature'].min()
-                temp_max = temp_data['metrics_0_fields_Temperature'].max()
-                if temp_max > temp_min:
-                    temp_data['weight'] = (temp_data['metrics_0_fields_Temperature'] - temp_min) / (temp_max - temp_min)
-                else:
-                    temp_data['weight'] = 0.5
+        # Add heatmap layers based on selected parameters
+        if selected_parameters and isinstance(selected_parameters, dict):
+            
+            # CO2 Heatmap Layer
+            if selected_parameters.get('CO2', False) and 'metrics_0_fields_CO2' in df.columns:
+                co2_data = df.dropna(subset=['metrics_0_fields_CO2']).copy()
+                if not co2_data.empty:
+                    # Normalize CO2 values for better visualization (0-1 range)
+                    co2_min = co2_data['metrics_0_fields_CO2'].min()
+                    co2_max = co2_data['metrics_0_fields_CO2'].max()
+                    if co2_max > co2_min:
+                        co2_data['weight'] = (co2_data['metrics_0_fields_CO2'] - co2_min) / (co2_max - co2_min)
+                    else:
+                        co2_data['weight'] = 0.5
+                    
+                    co2_heatmap = pdk.Layer(
+                        'HeatmapLayer',
+                        data=co2_data,
+                        get_position='[header_longitude, header_latitude]',
+                        get_weight='weight',
+                        radius_pixels=80,
+                        opacity=0.5,
+                        color_range=[
+                            [0, 255, 0],      # Green (low CO2)
+                            [255, 255, 0],    # Yellow
+                            [255, 165, 0],    # Orange
+                            [255, 0, 0],      # Red (high CO2)
+                            [139, 0, 0],      # Dark red
+                            [75, 0, 130]      # Purple (very high)
+                        ],
+                        pickable=False
+                    )
+                    layers.append(co2_heatmap)
+            
+            # Temperature Heatmap Layer
+            if selected_parameters.get('Temp', False) and 'metrics_0_fields_Temperature' in df.columns:
+                temp_data = df.dropna(subset=['metrics_0_fields_Temperature']).copy()
+                if not temp_data.empty:
+                    # Normalize temperature values for better visualization (0-1 range)
+                    temp_min = temp_data['metrics_0_fields_Temperature'].min()
+                    temp_max = temp_data['metrics_0_fields_Temperature'].max()
+                    if temp_max > temp_min:
+                        temp_data['weight'] = (temp_data['metrics_0_fields_Temperature'] - temp_min) / (temp_max - temp_min)
+                    else:
+                        temp_data['weight'] = 0.5
+                    
+                    temp_heatmap = pdk.Layer(
+                        'HeatmapLayer',
+                        data=temp_data,
+                        get_position='[header_longitude, header_latitude]',
+                        get_weight='weight',
+                        radius_pixels=60,
+                        opacity=0.6,
+                        color_range=[
+                            [0, 0, 255],      # Blue (cold)
+                            [0, 255, 255],    # Cyan 
+                            [0, 255, 0],      # Green
+                            [255, 255, 0],    # Yellow
+                            [255, 165, 0],    # Orange
+                            [255, 0, 0]       # Red (hot)
+                        ],
+                        pickable=False
+                    )
+                    layers.append(temp_heatmap)
+        
+        # Add PM2.5 paths layer only if PM2.5 is selected
+        if selected_parameters and isinstance(selected_parameters, dict) and selected_parameters.get('PM2.5', False):
+            # Convert to DataFrame and add LineLayer for PM2.5 paths
+            if paths_data:
+                paths_df = pd.DataFrame(paths_data)
                 
-                temp_heatmap = pdk.Layer(
-                    'HeatmapLayer',
-                    data=temp_data,
-                    get_position='[header_longitude, header_latitude]',
-                    get_weight='weight',
-                    radius_pixels=60,
-                    opacity=0.6,
-                    color_range=[
-                        [0, 0, 255],      # Blue (cold)
-                        [0, 255, 255],    # Cyan 
-                        [0, 255, 0],      # Green
-                        [255, 255, 0],    # Yellow
-                        [255, 165, 0],    # Orange
-                        [255, 0, 0]       # Red (hot)
-                    ],
-                    pickable=False
+                # Define a LineLayer to display paths on the map
+                line_layer = pdk.Layer(
+                    'LineLayer',
+                    data=paths_df,
+                    get_source_position='[start_lon, start_lat]',
+                    get_target_position='[end_lon, end_lat]',
+                    get_color='[R, G, B, 200]',
+                    get_width=10,
+                    highlight_color=[0, 0, 255],
+                    picking_radius=10,
+                    auto_highlight=True,
+                    pickable=True,
                 )
-                layers.append(temp_heatmap)
-    
-    # Add PM2.5 paths layer only if PM2.5 is selected
-    if selected_parameters and isinstance(selected_parameters, dict) and selected_parameters.get('PM2.5', False):
-        # Convert to DataFrame and add LineLayer for PM2.5 paths
-        if paths_data:
-            paths_df = pd.DataFrame(paths_data)
-            
-            # Define a LineLayer to display paths on the map
-            line_layer = pdk.Layer(
-                'LineLayer',
-                data=paths_df,
-                get_source_position='[start_lon, start_lat]',
-                get_target_position='[end_lon, end_lat]',
-                get_color='[R, G, B, A]',  # Use alpha from data for transparency
-                get_width=10,
-                highlight_color=[0, 0, 255],
-                picking_radius=10,
-                auto_highlight=True,
-                pickable=True,
-            )
-            
-            layers.append(line_layer)
-        else:
-            # If no paths can be created, show a message only if no other layers exist
-            if not layers:
-                st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
-    
-    # Check if any layers exist
-    if not layers:
-        st.warning("No hay capas disponibles para mostrar. Selecciona al menos un parámetro.")
-        return
+                
+                layers.append(line_layer)
+            else:
+                # If no paths can be created, show a message only if no other layers exist
+                if not layers:
+                    st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
+        
+        # Check if any layers exist
+        if not layers:
+            st.warning("No hay capas disponibles para mostrar. Selecciona al menos un parámetro.")
+            return
 
-    # Set the viewport location
-    view_state = pdk.ViewState(
-        latitude=df['header_latitude'].mean(),
-        longitude=df['header_longitude'].mean(),
-        zoom=14,
-        bearing=0,
-        pitch=45
-    )
+        # Set the viewport location
+        view_state = pdk.ViewState(
+            latitude=df['header_latitude'].mean(),
+            longitude=df['header_longitude'].mean(),
+            zoom=14,
+            bearing=0,
+            pitch=45
+        )
 
-    # Render with LineLayer
-    r = pdk.Deck(
-        layers=layers, 
-        map_style='road',
-        initial_view_state=view_state, 
-        tooltip={
-            "html": "<b>Ruta de Contaminación</b><br/><b>Tiempo:</b> {timestamp}<br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
-            "style": {
-                "backgroundColor": "rgba(0, 0, 0, 0.8)",
-                "color": "white",
-                "borderRadius": "10px",
-                "backdrop-filter": "blur(15.4px)",
-                "-webkit-backdrop-filter": "blur(15.4px)",
-                "padding": "10px",
-                "fontSize": "12px"
+        # Render with LineLayer
+        r = pdk.Deck(
+            layers=layers, 
+            map_style='dark',
+            initial_view_state=view_state, 
+            tooltip={
+                "html": "<b>Ruta de Contaminación</b><br/><b>Tiempo:</b> {timestamp}<br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
+                "style": {
+                    "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                    "color": "white",
+                    "borderRadius": "10px",
+                    "backdrop-filter": "blur(15.4px)",
+                    "-webkit-backdrop-filter": "blur(15.4px)",
+                    "padding": "10px",
+                    "fontSize": "12px"
+                }
             }
-        }
-    )
-    
-    # Mostrar en Streamlit
-    st.pydeck_chart(r)
+        )
+        
+        # Mostrar en Streamlit
+        st.pydeck_chart(r)
+
+        if st.session_state.map_controls:
+
+            with st.container(key="map_controls"):
+                
+                #leyenda
+                st.html(
+                """<div class="mydiv">
+                <table style="
+                    border-spacing: 0;
+                    text-align: center;
+                    margin: auto;
+                    box-sizing: border-box;
+                    border-radius: 12px;
+                    overflow: hidden;
+                ">
+                    <thead>
+                    <tr style="background-color: #333; color: white;">
+                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">PM2.5 (µg/m³)</th>
+                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">Categoría</th>
+                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">0.0 - 12.0</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Buena</td>
+                        <td style="background-color: #00e400; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">12.1 - 35.4</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Moderada</td>
+                        <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">35.5 - 55.4</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina para sensibles</td>
+                        <td style="background-color: #ff7e00; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">55.5 - 150.4</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina</td>
+                        <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">150.5 - 250.4</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy dañina</td>
+                        <td style="background-color: #8f3f97; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">250.5 - 500.4</td>
+                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligrosa</td>
+                        <td style="background-color: #7e0023; padding: 4px;">&nbsp;</td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>"""
+                )
+
+                if st.button("Recargar datos", type="secondary", key="reload_data",on_click=lambda: st.rerun()):
+                    st.rerun()
+
+
+                st.button("Ocultar leyenda", key="toggle_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
+        else:
+            # hidden controls
+
+            with st.container(key="hidden_map_controls"):
+
+                st.button("Leyenda", key="show_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
 
 
 @st.fragment(run_every=5)
@@ -354,13 +404,29 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
     except Exception as e:
         st.error(f"Error al actualizar mapa: {e}")
 
+@st.fragment()
+def graphs(df):
+    with st.container(key="graphs"):
+        with st.container(key="graph1"):
+            
+            st.html(
+            """
+            <div style="text-align: center;"> Contaminación por ruta </div>
+            """)
 
+            st.line_chart(
+                df.groupby('metrics_0_fields_Route')['metrics_0_fields_PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
+            )
 
-    
-    
-    # Mostrar en Streamlit
-    
-
+        with st.container(key="graph2"):
+            st.html(
+            """
+            <div style="text-align: center;"> Contaminación por día </div>
+            """)
+            
+            st.bar_chart(
+                df.groupby(df['_time'].dt.date)['metrics_0_fields_PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
+            )
 
 def main():
 
@@ -368,7 +434,7 @@ def main():
     st.html("""
 
     <div class="hero-section">
-        <h1 style="margin: 0; font-size: 36px;">Mapa de rutas de transporte público</h1>
+        <h1 style="margin: 0; font-size: 36px;">Dashboard de Calidad del Aire</h1>
     </h2>
     </div>
     """)
@@ -412,9 +478,7 @@ def main():
             df['route_int'] = pd.to_numeric(df['metrics_0_fields_Route'], errors='coerce')
         
         
-        # Create a unique container for filters
-        filter_container = st.container(border=True)
-        with filter_container:
+        with st.sidebar:
             
             # Define available parameters (used across columns)
             available_parameters = {
@@ -437,114 +501,62 @@ def main():
                     "default": False
             }}
             
-            # Create filter columns
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                # Date filter
-                if '_time' in df.columns:
-                    min_date = df['_time'].min().date()
-                    max_date = df['_time'].max().date()
-                    
-                    date_range = st.date_input(
-                        "Seleccionar el rango de fechas:",
-                        value=(min_date, max_date),
-                        min_value=min_date,
-                        max_value=max_date,
-                        key="date_filter"
-                    )
-                else:
-                    st.info("No hay datos de fecha disponibles")
-            
-            with col2:
-                # Route filter
-                if 'route_int' in df.columns:
-                    unique_routes = df['route_int'].dropna().astype(int).unique()
-                    selected_routes = st.multiselect(
-                        "Seleccionar las rutas:",
-                        options=sorted(unique_routes),
-                        default=sorted(unique_routes),
-                        key="route_filter"
-                    )
-                else:
-                    st.info("No hay datos de ruta disponibles")
-            
-            with col3:
-                # Parameters filter - Multiselect
-                available_param_options = []
-                default_selected = []
+            auto_refresh_enabled = st.toggle(
+                "Actualizar en tiempo real (5s)",
+                value=False,
+                key="map_auto_refresh",
+            )
+
+            # Date filter
+            if '_time' in df.columns:
+                min_date = df['_time'].min().date()
+                max_date = df['_time'].max().date()
                 
-                for param_key, param_info in available_parameters.items():
-                    if param_info["column"] in df.columns:
-                        available_param_options.append(param_key)
-                        if param_info["default"]:
-                            default_selected.append(param_key)
-                
-                selected_param_keys = st.multiselect(
-                    "Parámetros a Mostrar:",
-                    options=available_param_options,
-                    default=default_selected,
-                    format_func=lambda x: available_parameters[x]["label"],
-                    key="parameters_filter",
-                    help="Selecciona los parámetros que deseas visualizar en el mapa"
+                date_range = st.date_input(
+                    "Seleccionar el rango de fechas:",
+                    value=(min_date, max_date),
+                    min_value=min_date,
+                    max_value=max_date,
+                    key="date_filter"
                 )
-                
-                # Convert to the expected format for compatibility
-                selected_parameters = {}
-                for param_key in available_parameters.keys():
-                    selected_parameters[param_key] = param_key in selected_param_keys
-            
-            # Auto-refresh toggle - in a separate row
-            col_refresh = st.columns([1, 3])[0]  # Use only first column for compact layout
-            with col_refresh:
-                auto_refresh_enabled = st.toggle(
-                    "Actualizar en tiempo real (5s)",
-                    value=False,
-                    key="map_auto_refresh",
-                    
-                )
-            
-            # AQI Category Filter - new row
-            selected_aqi_categories = None
-            if 'metrics_0_fields_PM2.5' in df.columns:
-                
-                # Define AQI categories with colors
-                AQI_CATEGORIES = [
-                    ("Buena", "#00e400"),
-                    ("Moderada", "#ffff00"),
-                    ("Dañina para sensibles", "#ff7e00"),
-                    ("Dañina", "#ff0000"),
-                    ("Muy dañina", "#8f3f97"),
-                    ("Peligrosa", "#7e0023")
-                ]
-                
-                # Get available categories from data
-                df_with_aqi = df.copy()
-                PM25_THRESHOLDS = [
-                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
-                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
-                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
-                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
-                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
-                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
-                ]
-                
-                def get_aqi_category(pm25_value):
-                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
-                        if low <= pm25_value <= high:
-                            return category
-                    return PM25_THRESHOLDS[-1][4]
-                
-                df_with_aqi['aqi_category'] = df_with_aqi['metrics_0_fields_PM2.5'].apply(get_aqi_category)
-                available_aqi_categories = df_with_aqi['aqi_category'].unique().tolist()
-                
-                # Create multiselect for AQI categories
-                selected_aqi_categories = st.multiselect(
-                    "Seleccionar categorías ICA:",
-                    options=available_aqi_categories,
-                    default=available_aqi_categories,
-                    key="aqi_category_filter"                )
+            else:
+                st.info("No hay datos de fecha disponibles")
         
+            # Route filter
+            if 'route_int' in df.columns:
+                unique_routes = df['route_int'].dropna().astype(int).unique()
+                selected_routes = st.multiselect(
+                    "Seleccionar las rutas:",
+                    options=sorted(unique_routes),
+                    default=sorted(unique_routes),
+                    key="route_filter"
+                )
+            else:
+                st.info("No hay datos de ruta disponibles")
+            
+            # Parameters filter - Multiselect
+            available_param_options = []
+            default_selected = []
+            
+            for param_key, param_info in available_parameters.items():
+                if param_info["column"] in df.columns:
+                    available_param_options.append(param_key)
+                    if param_info["default"]:
+                        default_selected.append(param_key)
+            
+            selected_param_keys = st.multiselect(
+                "Parámetros a Mostrar:",
+                options=available_param_options,
+                default=default_selected,
+                format_func=lambda x: available_parameters[x]["label"],
+                key="parameters_filter",
+                help="Selecciona los parámetros que deseas visualizar en el mapa"
+            )
+            
+            # Convert to the expected format for compatibility
+            selected_parameters = {}
+            for param_key in available_parameters.keys():
+                selected_parameters[param_key] = param_key in selected_param_keys
        
         
         # Apply filters and show filtered map
@@ -600,6 +612,9 @@ def main():
                     plot_map(filtered_df, selected_parameters, auto_refresh=False, selected_aqi_categories=selected_aqi_categories)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
+
+
+    graphs(df)
 
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
