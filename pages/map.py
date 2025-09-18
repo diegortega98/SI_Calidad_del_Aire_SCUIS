@@ -264,7 +264,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
         # Render with LineLayer
         r = pdk.Deck(
             layers=layers, 
-            map_style='dark',
+            map_style='road',
             initial_view_state=view_state, 
             tooltip={
                 "html": "<b>Ruta de Contaminación</b><br/><b>Tiempo:</b> {timestamp}<br/><b>CO₂:</b> {co2_value} ppm<br/><b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Calidad:</b> {pm25_category}",
@@ -355,7 +355,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
 
 
 @st.fragment(run_every=5)
-def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories=None):
+def auto_refresh_map(date_range, selected_routes, selected_parameters):
     """Fragment that runs every 5 seconds when auto-refresh is enabled"""
     import pandas as pd
     
@@ -395,7 +395,7 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
                 st.caption(f"Última actualización: {current_time}")
                 
                 # Plot the refreshed map
-                plot_map(filtered_df, selected_parameters, auto_refresh=True, selected_aqi_categories=selected_aqi_categories)
+                plot_map(filtered_df, selected_parameters, auto_refresh=True)
             else:
                 st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
         else:
@@ -577,19 +577,6 @@ def main():
             if 'route_int' in df.columns and selected_routes:
                 filtered_df = filtered_df[filtered_df['route_int'].isin(selected_routes)]
             
-            # Apply AQI category filter
-            # Don't filter data completely - just pass the selection to plot_map for transparency
-            if selected_aqi_categories is not None and 'metrics_0_fields_PM2.5' in filtered_df.columns:
-                # Add AQI category to filtered_df for display purposes only
-                def get_aqi_category_for_filter(pm25_value):
-                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
-                        if low <= pm25_value <= high:
-                            return category
-                    return PM25_THRESHOLDS[-1][4]
-                
-                filtered_df['aqi_category'] = filtered_df['metrics_0_fields_PM2.5'].apply(get_aqi_category_for_filter)
-                # Don't filter the data - let plot_map handle transparency
-            
             # Filter data based on selected parameters (keep all data but note selection for display)
             # Parameters selection affects tooltip and display, not data filtering
             display_columns = []
@@ -606,10 +593,10 @@ def main():
                 # Handle auto-refresh mode
                 if auto_refresh_enabled:
                     # Use the auto-refresh fragment
-                    auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories)
+                    auto_refresh_map(date_range, selected_routes, selected_parameters)
                 else:
-                    # Use the normal static map - pass original data with AQI selection for transparency
-                    plot_map(filtered_df, selected_parameters, auto_refresh=False, selected_aqi_categories=selected_aqi_categories)
+                    # Use the normal static map
+                    plot_map(filtered_df, selected_parameters, auto_refresh=False)
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
