@@ -173,6 +173,15 @@
     overflow: hidden;
 }
 
+.st-key-data{
+    padding: 12px;
+    background-color: white;
+    border-radius:12px;
+    min-height:620px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    overflow: hidden;
+}
+
 /* ============================================
    RESPONSIVE DESIGN
    ============================================ */
