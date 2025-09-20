@@ -410,9 +410,8 @@ def graphs(df):
             """
             <div style="text-align: center;"> Contaminación por ruta </div>
             """)
-
             st.line_chart(
-                df.groupby('metrics_0_fields_Route')['metrics_0_fields_PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
+                df.groupby('route_int')['metrics_0_fields_PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
             )
 
         with st.container(key="graph2"):
@@ -597,8 +596,29 @@ def main():
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
-    graphs(df)
+        with st.container(key="graphs"):
+            with st.container(key="graph1"):
+                
+                st.html(
+                """
+                <div style="text-align: center;"> Contaminación por ruta </div>
+                """)
 
+                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_PM2.5": "PM2.5"},
+                inplace=True)
+
+                st.line_chart(df, x="Date-Time", y="PM2.5")
+
+            with st.container(key="graph2"):
+                st.html(
+                """
+                <div style="text-align: center;"> Contaminación por día </div>
+                """)
+                
+                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_Temperature": "Temperature (°C)"},
+                inplace=True)
+
+                st.line_chart(df, x="Date-Time", y="Temperature (°C)")
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

@@ -64,15 +64,7 @@ def main():
 
     if 'df' in locals() and not df.empty:
         # Convert routes to integers for better handling
-            st.write("Esta página muestra una tabla con los datos de calidad del aire en el transporte público del AMB.")
-
-            event = st.dataframe(
-                df,
-                key="data",
-                on_select="rerun",
-                selection_mode=["multi-row", "multi-column", "multi-cell"],
-            )
-            event.selection
+            st.write("Esta página contiene una variedad de información para la calidad del aire y otros parametros.")
 
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
