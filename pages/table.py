@@ -59,8 +59,6 @@ def main():
                 st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
-    
-    
 
     if 'df' in locals() and not df.empty:
         # Convert routes to integers for better handling

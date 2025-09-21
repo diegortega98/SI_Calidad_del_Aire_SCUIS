@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.express as px
 import pandas as pd
 import pydeck as pdk
 import time
@@ -465,8 +466,6 @@ def main():
                 st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
-    
-    
 
     if 'df' in locals() and not df.empty:
         # Convert routes to integers for better handling
@@ -604,10 +603,14 @@ def main():
                 <div style="text-align: center;"> Contaminación por ruta </div>
                 """)
 
-                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_PM2.5": "PM2.5"},
+                df.rename(columns={"route_int": "Route", "metrics_0_fields_PM2.5": "PM2.5"},
                 inplace=True)
 
-                st.line_chart(df, x="Date-Time", y="PM2.5")
+                dfroutechart = df.groupby('Route')['PM2.5'].mean()
+
+                fig = px.bar({'Route': dfroutechart.index,
+                'Average PM2.5': dfroutechart.values}, x="Route",y="Average PM2.5")
+                st.plotly_chart(fig)
 
             with st.container(key="graph2"):
                 st.html(
@@ -615,10 +618,14 @@ def main():
                 <div style="text-align: center;"> Contaminación por día </div>
                 """)
                 
-                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_Temperature": "Temperature (°C)"},
+                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
                 inplace=True)
 
-                st.line_chart(df, x="Date-Time", y="Temperature (°C)")
+                dfroutechart2 = df.groupby('Date-Time')['CO2'].mean()
+                
+                fig2 = px.line({'Date-Time': dfroutechart2.index,
+                'Average CO2': dfroutechart2.values}, x="Date-Time",y="Average CO2")
+                st.plotly_chart(fig2)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 
