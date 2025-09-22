@@ -173,13 +173,35 @@
     overflow: hidden;
 }
 
+.st-key-graphsx {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.st-key-graphx1{
+    flex: 50%;
+    overflow: hidden;
+}
+
+.st-key-graphx2{
+    flex: 50%;
+    overflow: hidden;
+}
+
 .st-key-data{
     padding: 12px;
     background-color: white;
     border-radius:12px;
-    min-height:620px;
+    min-height:720px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    overflow: hidden;
 }
 
 /* ============================================

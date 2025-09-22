@@ -64,14 +64,12 @@ def main():
         # Convert routes to integers for better handling
             st.write("Esta página muestra una tabla con los datos de calidad del aire en el transporte público del AMB.")
 
-            event = st.dataframe(
+            st.dataframe(
                 df,
                 key="data",
-                height=600,
+                height=700,
                 on_select="rerun",
             )
-            event.selection
-
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

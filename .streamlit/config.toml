@@ -6,3 +6,39 @@ toolbarMode = "minimal"
 primaryColor="#0FA539"
 backgroundColor="#F1F1F1"
 secondaryBackgroundColor="#F0F2F6"
+chartCategoricalColors = ["#0FA539", "#89b83c", "#d1c958", "#ffdb83", "#89ff92", "#ffdb83", "#00707c", "#d2a44f", "#98701c", "#008476"]
+chartSequentialColors = ["#0FA539", "#89b83c", "#d1c958", "#ffdb83", "#89ff92", "#ffdb83", "#00707c", "#d2a44f", "#98701c", "#008476"]
+# An array of ten colors to use for sequential or continuous chart data.
+#
+# The ten colors create a gradient color scale. These colors apply to
+# Plotly, Altair, and Vega-Lite charts.
+#
+# Invalid color strings are skipped. If there are not exactly ten
+# valid colors specified, Streamlit uses a default set of colors.
+#
+# For light themes, the following colors are the default:
+# [
+#     "#e4f5ff", #blue10
+#     "#c7ebff", #blue20
+#     "#a6dcff", #blue30
+#     "#83c9ff", #blue40
+#     "#60b4ff", #blue50
+#     "#3d9df3", #blue60
+#     "#1c83e1", #blue70
+#     "#0068c9", #blue80
+#     "#0054a3", #blue90
+#     "#004280", #blue100
+# ]
+# For dark themes, the following colors are the default:
+# [
+#     "#004280", #blue100
+#     "#0054a3", #blue90
+#     "#0068c9", #blue80
+#     "#1c83e1", #blue70
+#     "#3d9df3", #blue60
+#     "#60b4ff", #blue50
+#     "#83c9ff", #blue40
+#     "#a6dcff", #blue30
+#     "#c7ebff", #blue20
+#     "#e4f5ff", #blue10
+# ]
