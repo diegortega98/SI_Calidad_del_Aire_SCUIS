@@ -142,8 +142,7 @@ def main():
         st.stop()
 
     # Query
-    fields = ["Lan", "Lon", "CO2", "PM2.5", "Route", "Temperature"]
-    flux = flux_select(fields, start="-30d")
+    flux = flux_query("messages", start="-30d")
 
     with st.spinner("Consultando datos..."):
         try:

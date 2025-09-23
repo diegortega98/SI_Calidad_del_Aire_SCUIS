@@ -29,6 +29,7 @@ def plot_map(df, selected_parameters, auto_refresh=False):
 
     PM25_COLUMN = 'PM2.5'
     CO2_COLUMN = 'CO2'
+    TEMP_COLUMN = 'Temperature'
 
     PM25_THRESHOLDS = [
                     (0.0, 12.0, 0, 50, "Buena", "#00e400"),
@@ -54,59 +55,57 @@ def plot_map(df, selected_parameters, auto_refresh=False):
                 b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
                 return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
 
-    def get_paths(
-        df: pd.DataFrame,
-        time_col="_time",
-        lat_col="Lat",
-        lon_col="Lon",
-        group_col="location",
-        metric_cols=None,
-    ) -> pd.DataFrame:
-        """
-        Genera segmentos consecutivos (i -> i+1) por cada grupo en group_col,
-        con path listo para pydeck y promedios de métricas.
-        """
-        if group_col not in df.columns:
-            raise KeyError(f"'{group_col}' no está en el DataFrame")
+    def build_paths(df: pd.DataFrame) -> list[dict]:
+        
+        paths_data = []
+        if len(df) < 2:
+            return paths_data
 
-        def _build(g: pd.DataFrame) -> pd.DataFrame:
-            g = g.sort_values(time_col).reset_index(drop=True)
+        def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
+            sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
+            local_paths = []
+            for i in range(len(sub) - 1):
+                current_point = sub.iloc[i]
+                next_point = sub.iloc[i + 1]
 
-            # métricas a usar (si no se pasan -> todas numéricas excepto lat/lon/time)
-            if metric_cols is None:
-                non_metric = {time_col, lat_col, lon_col}
-                mcols = g.select_dtypes(include=[np.number]).columns.difference(list(non_metric))
-            else:
-                mcols = metric_cols
+                # Color
+                if "pm25_color" in sub.columns:
+                    color = current_point["pm25_color"]
+                    if isinstance(color, list) and len(color) >= 3:
+                        path_color = [color[0], color[1], color[2], 200]
+                    else:
+                        path_color = [0, 228, 0, 200]
+                else:
+                    path_color = [0, 228, 0, 200]
 
-            out = pd.DataFrame({
-                "start_time": g[time_col],
-                "end_time":   g[time_col].shift(-1),
-                "start_lat":  g[lat_col],
-                "start_lon":  g[lon_col],
-                "end_lat":    g[lat_col].shift(-1),
-                "end_lon":    g[lon_col].shift(-1),
-            })
+                path = {
+                    "start_lon": current_point["Lon"],
+                    "start_lat": current_point["Lat"],
+                    "end_lon": next_point["Lon"],
+                    "end_lat": next_point["Lat"],
+                    "R": path_color[0],
+                    "G": path_color[1],
+                    "B": path_color[2],
+                    "pm25_category": current_point.get("pm25_category", "No disponible"),
+                    "co2_value": current_point.get("co2_value", 0),
+                    "pm25_value": current_point.get("pm25_value", 0),
+                    "timestamp": (
+                        current_point["_time"].strftime("%Y-%m-%d %H:%M:%S")
+                        if "_time" in current_point and pd.notna(current_point["_time"])
+                        else "No disponible"
+                    ),
+                    "location": current_point.get("location", "No disponible"),
+                }
+                local_paths.append(path)
+            return local_paths
 
-            for c in mcols:
-                out[f"avg_{c}"] = (g[c] + g[c].shift(-1)) / 2
+        if "location" in df.columns:
+            for _, sub in df.groupby("location"):
+                paths_data.extend(_build_for_subset(sub))
+        else:
+            paths_data = _build_for_subset(df)
 
-            out["path"] = out.apply(
-                lambda r: [[r["start_lon"], r["start_lat"]], [r["end_lon"], r["end_lat"]]],
-                axis=1
-            )
-
-            return out.dropna(subset=["end_time"]).reset_index(drop=True)
-
-        segs = (
-            df.groupby(group_col, group_keys=True, dropna=False)
-            .apply(_build)
-            .reset_index(level=0, drop=False)
-            .reset_index(drop=True)
-        )
-
-        segs["segment_index"] = segs.groupby(group_col).cumcount()
-        return segs
+        return paths_data
     
     
 
@@ -139,45 +138,9 @@ def plot_map(df, selected_parameters, auto_refresh=False):
             df['pm25_value'] = df[PM25_COLUMN].round(1)
             
         # Create paths data if there are 2 or more records
-        paths_data = []
+        
 
-        if len(df) >= 2:
-            # Sort by time to create logical path sequence
-            if '_time' in df.columns:
-                df_sorted = df.sort_values('_time')
-            else:
-                df_sorted = df.copy()
-            
-            # Create paths between consecutive points
-            for i in range(len(df_sorted) - 1):
-                current_point = df_sorted.iloc[i]
-                next_point = df_sorted.iloc[i + 1]
-                
-                # Get PM2.5 color for the path (using current point's color)
-                if 'pm25_color' in df.columns:
-                    color = current_point['pm25_color']
-                    # Ensure color is in the right format [R, G, B, A]
-                    if isinstance(color, list) and len(color) >= 3:
-                        path_color = [color[0], color[1], color[2], 200]
-                    else:
-                        path_color = [0, 228, 0, 200]  # Default green
-                else:
-                    path_color = [0, 228, 0, 200]  # Default green
-                
-                path = {
-                    'start_lon': current_point['Lon'],
-                    'start_lat': current_point['Lat'],
-                    'end_lon': next_point['Lon'],
-                    'end_lat': next_point['Lat'],
-                    'R': path_color[0],
-                    'G': path_color[1],
-                    'B': path_color[2],
-                    'pm25_category': current_point.get('pm25_category', 'No disponible'),
-                    'co2_value': current_point.get('co2_value', 0),
-                    'pm25_value': current_point.get('pm25_value', 0),
-                    'timestamp': current_point.get('_time', '').strftime('%Y-%m-%d %H:%M:%S') if pd.notna(current_point.get('_time', '')) else 'No disponible'
-                }
-                paths_data.append(path)
+        
         
         # Initialize layers list
         layers = []
@@ -250,32 +213,64 @@ def plot_map(df, selected_parameters, auto_refresh=False):
         # Add PM2.5 paths layer only if PM2.5 is selected
         if PM25_COLUMN in selected_parameters:
             # Convert to DataFrame and add LineLayer for PM2.5 paths
-            if paths_data:
-                paths_df = pd.DataFrame(paths_data)
-                # Define a LineLayer to display paths on the map
-                line_layer = pdk.Layer(
-                    'LineLayer',
-                    data=paths_df,
-                    get_source_position='[start_lon, start_lat]',
-                    get_target_position='[end_lon, end_lat]',
-                    get_color='[R, G, B, 200]',
-                    get_width=10,
-                    highlight_color=[0, 0, 255],
-                    picking_radius=10,
-                    auto_highlight=True,
-                    pickable=True,
-                )
-                
-                layers.append(line_layer)
-            else:
-                # If no paths can be created, show a message only if no other layers exist
-                if not layers:
-                    st.info("Se necesitan al menos 2 puntos de datos para mostrar rutas.")
+            
+            paths_df = build_paths(df)
+            # Define a LineLayer to display paths on the map
+            line_layer = pdk.Layer(
+                'LineLayer',
+                data=paths_df,
+                get_source_position='[start_lon, start_lat]',
+                get_target_position='[end_lon, end_lat]',
+                get_color='[R, G, B, 200]',
+                get_width=10,
+                highlight_color=[0, 0, 255],
+                picking_radius=10,
+                auto_highlight=True,
+                pickable=True,
+            )
+            
+            layers.append(line_layer)
         
+        if CO2_COLUMN in selected_parameters:
+
+            co2_heatmap = pdk.Layer(
+                'HeatmapLayer',
+                data=df.dropna(subset=['CO2']),
+                get_position='[Lon, Lat]',
+                get_weight='CO2',
+                radius_pixels=80,
+                opacity=0.5,
+                color_range=[
+                    [0, 255, 0],      # Green (low CO2)
+                    [255, 255, 0],    # Yellow
+                    [255, 0, 0],      # Red (high CO2)
+                ],
+                pickable=False
+            )
+
+            layers.append(co2_heatmap)
+
+        if TEMP_COLUMN in selected_parameters:
+
+            temp_heatmap = pdk.Layer(
+                'HexmapLayer',
+                data=df.dropna(subset=['Temperature']),
+                get_position='[Lon, Lat]',
+                get_weight='Temperature',
+                radius_pixels=60,
+                opacity=0.2,
+                color_range=[
+                    [0, 0, 255],      # Blue (cold)
+                    [0, 255, 0],      # Green
+                    [255, 0, 0]       # Red (hot)
+                ],
+                pickable=False
+            )
+
+            layers.append(temp_heatmap)
+
         # Check if any layers exist
-        if not layers:
-            st.warning("No hay capas disponibles para mostrar. Selecciona al menos un parámetro.")
-            return
+       
 
         # Set the viewport location
         view_state = pdk.ViewState(
@@ -476,7 +471,6 @@ def main():
         try:
             df = cached_query(flux)
             #Columns location','CO2', 'Lat', 'Lon', 'PM2_5', 'Temperature'
-            print(df.columns)
         except Exception as e:
             st.warning(f"No fue posible obtener datos. Revisa la query Flux. Detalle: {e}")
         else:
@@ -569,7 +563,8 @@ def main():
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
-        chartSequentialColors = ["#0FA539", "#89b83c", "#d1c958", "#ffdb83"]
+        chartSequentialColors = ["#0FA539", "#89b83c"]#, "#d1c958", "#ffdb83"]
+
 
         with st.container(key="graphs"):
             with st.container(key="graph1"):
@@ -579,15 +574,13 @@ def main():
                 <div style="text-align: center;"> Contaminación promedio por ruta </div>
                 """)
 
-                df.rename(columns={"Ruta": "location", "PM2_5": "PM2_5"},
-                inplace=True)
+                dfchart = df.groupby('location')['PM2.5'].mean()
 
-                dfchart = df.groupby('Location')['PM2.5'].mean()
-
-                fig = px.bar({'Location': dfchart.index,
-                'Average PM2.5': dfchart.values}, x="Location", y="Average PM2.5", color=chartSequentialColors)
+                fig = px.bar({'location': dfchart.index,
+                'Average PM2.5': dfchart.values}, x="location", y="Average PM2.5", color=chartSequentialColors)
                 fig.update_traces(showlegend=False)
                 st.plotly_chart(fig, use_container_width=True, theme=None)
+
 
             with st.container(key="graph2"):
                 st.html(
