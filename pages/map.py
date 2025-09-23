@@ -90,8 +90,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 path = {
                     "start_lon": current_point["Lon"],
                     "start_lat": current_point["Lat"],
+                    "start_elevation": 50,  # Add elevation to start point
                     "end_lon": next_point["Lon"],
                     "end_lat": next_point["Lat"],
+                    "end_elevation": 50,    # Add elevation to end point
                     "R": path_color[0],
                     "G": path_color[1],
                     "B": path_color[2],
@@ -182,18 +184,21 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     co2_min = co2_data['CO2'].min()
                     co2_max = co2_data['CO2'].max()
                     
-                    # Create color based on CO2 value (min=green, max=red)
+                    # Create color based on CO2 value using standard thresholds
                     def get_co2_color(co2_value):
-                        if co2_max > co2_min:
-                            # Normalize to 0-1 range
-                            normalized = (co2_value - co2_min) / (co2_max - co2_min)
-                            # Color from green (low) to red (high)
-                            red = int(255 * normalized)
-                            green = int(255 * (1 - normalized))
-                            blue = 0
-                            return [red, green, blue, 180]
+                        # Standard CO2 thresholds (ppm)
+                        if co2_value <= 400:
+                            return [0, 255, 0, 180]    # Green - Outdoor level
+                        elif co2_value <= 600:
+                            return [128, 255, 0, 180]  # Light green - Acceptable
+                        elif co2_value <= 1000:
+                            return [255, 255, 0, 180]  # Yellow - Drowsiness may begin
+                        elif co2_value <= 5000:
+                            return [255, 165, 0, 180]  # Orange - Workplace exposure limit
+                        elif co2_value <= 10000:
+                            return [255, 69, 0, 180]   # Red orange - Drowsiness
                         else:
-                            return [255, 255, 0, 180]  # Yellow if all values are the same
+                            return [255, 0, 0, 180]    # Red - Immediately dangerous
                     
                     # Apply colors to data
                     co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
@@ -250,14 +255,16 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             line_layer = pdk.Layer(
                 'LineLayer',
                 data=paths_df,
-                get_source_position='[start_lon, start_lat]',
-                get_target_position='[end_lon, end_lat]',
+                get_source_position='[start_lon, start_lat, start_elevation]',
+                get_target_position='[end_lon, end_lat, end_elevation]',
                 get_color='[R, G, B, A]',  # Use the opacity from data
                 get_width=10,
                 highlight_color=[0, 0, 255],
                 picking_radius=10,
                 auto_highlight=True,
-                pickable=True
+                pickable=True,
+                wireframe=False,
+                extruded=True
             )
             
             layers.append(line_layer)
@@ -269,18 +276,21 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 co2_min = co2_data['CO2'].min()
                 co2_max = co2_data['CO2'].max()
                 
-                # Create color based on CO2 value (min=green, max=red)
+                # Create color based on CO2 value using standard thresholds
                 def get_co2_color(co2_value):
-                    if co2_max > co2_min:
-                        # Normalize to 0-1 range
-                        normalized = (co2_value - co2_min) / (co2_max - co2_min)
-                        # Color from green (low) to red (high)
-                        red = int(255 * normalized)
-                        green = int(255 * (1 - normalized))
-                        blue = 0
-                        return [red, green, blue, 180]
+                    # Standard CO2 thresholds (ppm)
+                    if co2_value <= 400:
+                        return [0, 255, 0, 180]    # Green - Outdoor level
+                    elif co2_value <= 600:
+                        return [128, 255, 0, 180]  # Light green - Acceptable
+                    elif co2_value <= 1000:
+                        return [255, 255, 0, 180]  # Yellow - Drowsiness may begin
+                    elif co2_value <= 5000:
+                        return [255, 165, 0, 180]  # Orange - Workplace exposure limit
+                    elif co2_value <= 10000:
+                        return [255, 69, 0, 180]   # Red orange - Drowsiness
                     else:
-                        return [255, 255, 0, 180]  # Yellow if all values are the same
+                        return [255, 0, 0, 180]    # Red - Immediately dangerous
                 
                 # Apply colors to data
                 co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
@@ -311,22 +321,23 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 temp_min = temp_data['Temperature'].min()
                 temp_max = temp_data['Temperature'].max()
                 
-                # Create color based on temperature value (min=blue, max=red)
+                # Create color based on temperature value using standard thresholds
                 def get_temp_color(temp_value):
-                    if temp_max > temp_min:
-                        # Normalize to 0-1 range
-                        normalized = (temp_value - temp_min) / (temp_max - temp_min)
-                        # Color from blue (cold) to red (hot)
-                        if normalized < 0.5:
-                            # Blue to green
-                            ratio = normalized * 2
-                            return [int(0 * ratio), int(255 * ratio), int(255 * (1 - ratio)), 180]
-                        else:
-                            # Green to red
-                            ratio = (normalized - 0.5) * 2
-                            return [int(255 * ratio), int(255 * (1 - ratio)), 0, 180]
+                    # Standard temperature thresholds (°C)
+                    if temp_value <= 10:
+                        return [0, 0, 255, 180]     # Blue - Very cold
+                    elif temp_value <= 15:
+                        return [0, 128, 255, 180]   # Light blue - Cold
+                    elif temp_value <= 20:
+                        return [0, 255, 255, 180]   # Cyan - Cool
+                    elif temp_value <= 25:
+                        return [0, 255, 0, 180]     # Green - Comfortable
+                    elif temp_value <= 30:
+                        return [255, 255, 0, 180]   # Yellow - Warm
+                    elif temp_value <= 35:
+                        return [255, 165, 0, 180]   # Orange - Hot
                     else:
-                        return [0, 255, 0, 180]  # Green if all values are the same
+                        return [255, 0, 0, 180]     # Red - Very hot
                 
                 # Apply colors and size to data
                 temp_data['temp_color'] = temp_data['Temperature'].apply(get_temp_color)
@@ -334,21 +345,21 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 temp_data['temp_value'] = temp_data['Temperature'].round(1)
                 temp_data['timestamp'] = temp_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in temp_data.columns else 'No disponible'
 
-                temp_scatter = pdk.Layer(
-                    'ScatterplotLayer',
+                # Use ColumnLayer for temperature (rectangular columns)
+                temp_columns = pdk.Layer(
+                    'ColumnLayer',
                     data=temp_data,
                     get_position='[Lon, Lat]',
-                    get_color='temp_color',
-                    get_radius='temp_size',
-                    radius_scale=1,
-                    radius_min_pixels=10,
-                    radius_max_pixels=50,
+                    get_fill_color='temp_color',
+                    get_elevation='temp_size',
+                    elevation_scale=2,
+                    radius=15,
                     pickable=False,
                     auto_highlight=False,
                     opacity=0.7
                 )
 
-                layers.append(temp_scatter)
+                layers.append(temp_columns)
 
         # Check if any layers exist
        
@@ -386,59 +397,183 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
 
             with st.container(key="map_controls"):
                 
-                #leyenda
-                st.html(
-                """<div class="mydiv">
-                <table style="
-                    border-spacing: 0;
-                    text-align: center;
-                    margin: auto;
-                    box-sizing: border-box;
-                    border-radius: 12px;
-                    overflow: hidden;
-                ">
-                    <thead>
-                    <tr style="background-color: #333; color: white;">
-                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">PM2.5 (µg/m³)</th>
-                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">Categoría</th>
-                        <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">0.0 - 12.0</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Buena</td>
-                        <td style="background-color: #00e400; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">12.1 - 35.4</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Moderada</td>
-                        <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">35.5 - 55.4</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina para sensibles</td>
-                        <td style="background-color: #ff7e00; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">55.5 - 150.4</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina</td>
-                        <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">150.5 - 250.4</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy dañina</td>
-                        <td style="background-color: #8f3f97; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">250.5 - 500.4</td>
-                        <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligrosa</td>
-                        <td style="background-color: #7e0023; padding: 4px;">&nbsp;</td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>"""
+                # Legend selector
+                legend_option = st.selectbox(
+                    "Seleccionar leyenda:",
+                    options=["PM2.5 (Calidad del Aire)", "CO2 (ppm)", "Temperatura (°C)"],
+                    index=0,
+                    key="legend_selector"
                 )
+                
+                if legend_option == "PM2.5 (Calidad del Aire)":
+                    #leyenda PM2.5
+                    st.html(
+                    """<div class="mydiv">
+                    <table style="
+                        border-spacing: 0;
+                        text-align: center;
+                        margin: auto;
+                        box-sizing: border-box;
+                        border-radius: 12px;
+                        overflow: hidden;
+                    ">
+                        <thead>
+                        <tr style="background-color: #333; color: white;">
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">PM2.5 (µg/m³)</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Categoría</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">0.0 - 12.0</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Buena</td>
+                            <td style="background-color: #00e400; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">12.1 - 35.4</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Moderada</td>
+                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">35.5 - 55.4</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina para sensibles</td>
+                            <td style="background-color: #ff7e00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">55.5 - 150.4</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina</td>
+                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">150.5 - 250.4</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy dañina</td>
+                            <td style="background-color: #8f3f97; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">250.5 - 500.4</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligrosa</td>
+                            <td style="background-color: #7e0023; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>"""
+                    )
+                
+                elif legend_option == "CO2 (ppm)":
+                    # CO2 legend
+                    st.html(
+                    """<div class="mydiv">
+                    <table style="
+                        border-spacing: 0;
+                        text-align: center;
+                        margin: auto;
+                        box-sizing: border-box;
+                        border-radius: 12px;
+                        overflow: hidden;
+                    ">
+                        <thead>
+                        <tr style="background-color: #333; color: white;">
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">CO2 (ppm)</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Nivel</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">≤ 400</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Exterior</td>
+                            <td style="background-color: #00ff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">401 - 600</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Aceptable</td>
+                            <td style="background-color: #80ff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">601 - 1000</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Somnolencia</td>
+                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">1001 - 5000</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Límite laboral</td>
+                            <td style="background-color: #ffa500; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">5001 - 10000</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligroso</td>
+                            <td style="background-color: #ff4500; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">> 10000</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Inmediatamente peligroso</td>
+                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>"""
+                    )
+                
+                elif legend_option == "Temperatura (°C)":
+                    # Temperature legend
+                    st.html(
+                    """<div class="mydiv">
+                    <table style="
+                        border-spacing: 0;
+                        text-align: center;
+                        margin: auto;
+                        box-sizing: border-box;
+                        border-radius: 12px;
+                        overflow: hidden;
+                    ">
+                        <thead>
+                        <tr style="background-color: #333; color: white;">
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Temperatura (°C)</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Sensación</th>
+                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">≤ 10</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy frío</td>
+                            <td style="background-color: #0000ff; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">11 - 15</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Frío</td>
+                            <td style="background-color: #0080ff; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">16 - 20</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Fresco</td>
+                            <td style="background-color: #00ffff; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">21 - 25</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Confortable</td>
+                            <td style="background-color: #00ff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">26 - 30</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Cálido</td>
+                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">31 - 35</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Caliente</td>
+                            <td style="background-color: #ffa500; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">> 35</td>
+                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy caliente</td>
+                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>"""
+                    )
 
                 if st.button("Recargar datos", type="secondary", key="reload_data",on_click=lambda: st.rerun()):
                     st.rerun()
