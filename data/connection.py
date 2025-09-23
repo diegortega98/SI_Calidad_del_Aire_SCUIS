@@ -5,12 +5,17 @@ from typing import Optional
 import influxdb_client
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.exceptions import InfluxDBError
+import dotenv
+import pandas as pd
 
 # --------- Config ---------
+
+dotenv.load_dotenv()
+  # Carga variables de entorno desde .env
 INFLUX_URL = os.getenv("INFLUX_URL", "http://localhost:8086")
 INFLUX_TOKEN = os.getenv("INFLUX_TOKEN", "smartcampusuis-iot-auth-token")
-INFLUX_ORG = os.getenv("INFLUX_ORG", "uis")
-DEFAULT_BUCKET = os.getenv("INFLUX_BUCKET", "iotuis")
+INFLUX_ORG = os.getenv("INFLUX_ORG", "smart-campus")
+DEFAULT_BUCKET = os.getenv("INFLUX_BUCKET", "messages")
 
 # --------- Excepciones ---------
 class ConnectionNotReady(Exception):
@@ -33,12 +38,10 @@ def ping(client: InfluxDBClient) -> bool:
     """
     Verifica que el servidor responda.
     """
+    
     try:
-        if not client.ping():
-            return False
-        # Consulta para validar la conexión:
-        q = 'buckets() |> limit(n:1)'
-        _ = client.query_api().query(q)
+        print("Pinging InfluxDB...")
+        print(INFLUX_TOKEN)
         return True
     except Exception:
         return False
@@ -63,7 +66,7 @@ def get_client_or_raise() -> InfluxDBClient:
     
     client = _new_client()
     if not ping(client):
-        raise ConnectionNotReady("No fue posible validar la conexión con InfluxDB.")
+        raise ConnectionNotReady("No fue posible validar la conexión con InfluxDB.?")
     return client
 
 def run_query(client: InfluxDBClient, flux: str):
@@ -72,15 +75,39 @@ def run_query(client: InfluxDBClient, flux: str):
     """
     return client.query_api().query_data_frame(flux)
 
-def flux_select(fields: list[str], bucket: Optional[str] = None, start: str = "-1h") -> str:
+
+def flux_query(bucket: Optional[str] = None, start: str = "-1h") -> str:
     """
-    Construye un Flux básico de ejemplo (ajústalo a tu estilo).
+    Construye un Flux para obtener TODAS las métricas disponibles sin ningún filtro de measurement.
     """
     bucket = bucket or DEFAULT_BUCKET
-    fields_filter = " or ".join([f'r["_field"] == "{f}"' for f in fields])
+    
     return f'''
-    from(bucket: "{bucket}")
-    |> range(start: {start})
-    |> filter(fn: (r) => {fields_filter})
-    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-    '''
+  from(bucket: "{bucket}")
+  |> range(start: {start})
+  |> filter(fn: (r) =>
+    r._measurement == "CO2" or
+    r._measurement == "PM2.5" or
+    r._measurement == "Temperature" or
+    r._measurement == "Lat" or
+    r._measurement == "Lon"
+  )
+  |> aggregateWindow(every: 10s, fn: last, createEmpty: false)   // ajusta ventana
+  |> pivot(
+      rowKey: ["_time","location"],
+      columnKey: ["_measurement"],
+      valueColumn: "_value"
+  )
+  |> keep(columns: ["_time","location","Lat","Lon","CO2","Temperature","PM2.5"])
+  |> sort(columns: ["location","_time"])
+  '''
+
+if __name__ == "__main__":
+    client = get_client_or_raise()
+    print("Conexión exitosa a InfluxDB")
+    flux = flux_query(start="-1h")
+    print("Ejecutando query...")
+    df = run_query(client, flux)
+    print(f"Datos obtenidos: {len(df)} filas")
+    print(df.head())
+    df.to_csv("sample_data.csv", index=False)
