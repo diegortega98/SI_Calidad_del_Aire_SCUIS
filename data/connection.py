@@ -40,8 +40,11 @@ def ping(client: InfluxDBClient) -> bool:
     """
     
     try:
-        print("Pinging InfluxDB...")
-        print(INFLUX_TOKEN)
+        if not client.ping():
+            return False
+        # Consulta para validar la conexión:
+        q = 'buckets() |> limit(n:1)'
+        _ = client.query_api().query(q)
         return True
     except Exception:
         return False
@@ -104,7 +107,6 @@ def flux_query(bucket: Optional[str] = None, start: str = "-1h") -> str:
 
 if __name__ == "__main__":
     client = get_client_or_raise()
-    print("Conexión exitosa a InfluxDB")
     flux = flux_query(start="-1h")
     print("Ejecutando query...")
     df = run_query(client, flux)
