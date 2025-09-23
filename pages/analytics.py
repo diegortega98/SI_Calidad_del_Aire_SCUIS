@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.express as px
 import pandas as pd
 import pydeck as pdk
 import time
@@ -59,13 +60,74 @@ def main():
                 st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
-    
-    
 
     if 'df' in locals() and not df.empty:
         # Convert routes to integers for better handling
             st.write("Esta página contiene una variedad de información para la calidad del aire y otros parametros.")
 
+    with st.container(key="graphs"):
+        with st.container(key="graph1"):
+            
+            st.html(
+            """
+            <div style="text-align: center;"> Coordenadas con concentraciones más altas </div>
+            """)
+
+            df.rename(columns={"metrics_0_fields_Route": "Route", "metrics_0_fields_PM2.5": "PM2.5"},
+            inplace=True)
+
+            dfchart3 = df.groupby('Route')['PM2.5'].mean()
+
+            fig3 = px.bar({'Route': dfchart3.index,
+            'Average PM2.5': dfchart3.values}, x="Route",y="Average PM2.5")
+            st.plotly_chart(fig3, use_container_width=True, theme=None, key="fig3")
+
+        with st.container(key="graph2"):
+            st.html(
+            """
+            <div style="text-align: center;"> Contaminación por día </div>
+            """)
+            
+            df.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
+            inplace=True)
+
+            dfchart4 = df.groupby('Date-Time')['CO2'].mean()
+            
+            fig4 = px.line({'Date-Time': dfchart4.index,
+            'Average CO2': dfchart4.values}, x="Date-Time",y="Average CO2")
+            st.plotly_chart(fig4, use_container_width=True, theme=None, key="fig4")
+
+    with st.container(key="graphsx"):
+        with st.container(key="graphx1"):
+            
+            st.html(
+            """
+            <div style="text-align: center;"> Coordenadas con concentraciones más altas </div>
+            """)
+
+            df.rename(columns={"metrics_0_fields_Route": "Route", "metrics_0_fields_PM2.5": "PM2.5"},
+            inplace=True)
+
+            dfchart5 = df.groupby('Route')['PM2.5'].mean()
+
+            fig5 = px.bar({'Route': dfchart5.index,
+            'Average PM2.5': dfchart5.values}, x="Route",y="Average PM2.5")
+            st.plotly_chart(fig5, use_container_width=True, theme=None, key="fig5")
+
+        with st.container(key="graphx2"):
+            st.html(
+            """
+            <div style="text-align: center;"> Contaminación por día </div>
+            """)
+            
+            df.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
+            inplace=True)
+
+            dfchart6 = df.groupby('Date-Time')['CO2'].mean()
+            
+            fig6 = px.line({'Date-Time': dfchart6.index,
+            'Average CO2': dfchart6.values}, x="Date-Time",y="Average CO2")
+            st.plotly_chart(fig6, use_container_width=True, theme=None, key="fig6")
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

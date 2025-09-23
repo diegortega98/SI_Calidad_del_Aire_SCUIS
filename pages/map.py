@@ -569,37 +569,40 @@ def main():
             else:
                 st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
+        chartSequentialColors = ["#0FA539", "#89b83c", "#d1c958", "#ffdb83"]
+
         with st.container(key="graphs"):
             with st.container(key="graph1"):
                 
                 st.html(
                 """
-                <div style="text-align: center;"> Contaminación por ruta </div>
+                <div style="text-align: center;"> Contaminación promedio por ruta </div>
                 """)
 
                 df.rename(columns={"Ruta": "location", "PM2_5": "PM2_5"},
                 inplace=True)
 
-                dfroutechart = df.groupby('location')['PM2.5'].mean()
+                dfchart = df.groupby('Location')['PM2.5'].mean()
 
-                fig = px.bar({'Route': dfroutechart.index,
-                'Average PM2_5': dfroutechart.values}, x="Route",y="Average PM2_5")
-                st.plotly_chart(fig)
+                fig = px.bar({'Location': dfchart.index,
+                'Average PM2.5': dfchart.values}, x="Location", y="Average PM2.5", color=chartSequentialColors)
+                fig.update_traces(showlegend=False)
+                st.plotly_chart(fig, use_container_width=True, theme=None)
 
             with st.container(key="graph2"):
                 st.html(
                 """
-                <div style="text-align: center;"> Contaminación por día </div>
+                <div style="text-align: center;"> Contaminación promedio por hora </div>
                 """)
                 
                 df.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
                 inplace=True)
 
-                dfroutechart2 = df.groupby('Date-Time')['CO2'].mean()
+                dfchart2 = df.groupby('Date-Time')['CO2'].mean()
                 
-                fig2 = px.line({'Date-Time': dfroutechart2.index,
-                'Average CO2': dfroutechart2.values}, x="Date-Time",y="Average CO2")
-                st.plotly_chart(fig2)
+                fig2 = px.line({'Date-Time': dfchart2.index,
+                'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2")
+                st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 
