@@ -69,13 +69,14 @@ def get_client_or_raise() -> InfluxDBClient:
     
     client = _new_client()
     if not ping(client):
-        raise ConnectionNotReady("No fue posible validar la conexión con InfluxDB.?")
+        raise ConnectionNotReady("No fue posible validar la conexión con InfluxDB.")
     return client
 
 def run_query(client: InfluxDBClient, flux: str):
     """
     Ejecuta una query Flux
     """
+    print(client.query_api().query_data_frame(flux).columns)
     return client.query_api().query_data_frame(flux)
 
 

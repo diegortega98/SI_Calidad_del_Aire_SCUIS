@@ -17,6 +17,7 @@ def get_cached_client() -> InfluxDBClient:
 @st.cache_data(ttl=10, show_spinner=False)
 def cached_query(flux: str):
     client = get_cached_client()
+    
     return run_query(client, flux)
 
 def main():
@@ -49,6 +50,7 @@ def main():
     with st.spinner("Consultando datos..."):
         try:
             df = cached_query(flux)
+            
         except Exception as e:
             st.warning(f"No fue posible obtener datos. Revisa la query Flux. Detalle: {e}")
         else:
