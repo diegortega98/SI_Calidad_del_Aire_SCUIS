@@ -601,6 +601,8 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
         # Clear cache to get fresh data
         st.cache_data.clear()
         fresh_df = cached_query(flux)
+
+        print(fresh_df.columns)
         
         if not fresh_df.empty:
             # Convert routes to integers for better handling
@@ -689,6 +691,7 @@ def main():
     with st.spinner("Consultando datos..."):
         try:
             df = cached_query(flux)
+            
             #Columns location','CO2', 'Lat', 'Lon', 'PM2_5', 'Temperature'
         except Exception as e:
             st.warning(f"No fue posible obtener datos. Revisa la query Flux. Detalle: {e}")
@@ -735,20 +738,24 @@ def main():
                 min_hour = int(df['hour'].min())
                 max_hour = int(df['hour'].max())
                 
-                hour_range = st.slider(
-                    "Seleccionar el rango de horas:",
-                    min_value=min_hour,
-                    max_value=max_hour,
-                    value=(min_hour, max_hour),
-                    step=1,
-                    key="hour_filter",
-                    help="Selecciona el rango de horas del día (formato 24h)",
-                    format="%d:00"
-                )
-                
-                # Convert range to list of hours for filtering
-                selected_hours = list(range(hour_range[0], hour_range[1] + 1))
-            
+                # Handle case when there's only one hour of data
+                if min_hour == max_hour:
+                    st.info(f"Solo hay datos disponibles para la hora: {min_hour}:00")
+                    selected_hours = [min_hour]
+                else:
+                    hour_range = st.slider(
+                        "Seleccionar rango de horas:",
+                        min_value=min_hour,
+                        max_value=max_hour,
+                        value=(min_hour, max_hour),
+                        step=1,
+                        key="hour_filter",
+                        help="Selecciona el rango de horas del día (formato 24h)",
+                        format="%d:00"
+                    )
+                    
+                    # Convert range to list of hours for filtering
+                    selected_hours = list(range(hour_range[0], hour_range[1] + 1))       
         
             # Route filter
             if 'location' in df.columns:
