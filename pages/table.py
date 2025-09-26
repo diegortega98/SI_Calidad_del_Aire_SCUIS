@@ -159,8 +159,6 @@ def main():
             except:
                 st.info("No fue posible obtener la última conexión de datos.")
             
-            # Add filters in sidebar
-            st.sidebar.markdown("---")
             st.sidebar.markdown("### Filtros")
             
             # Route filter
@@ -261,7 +259,7 @@ def main():
         st.dataframe(
             display_df,
             key="data",
-            height=700,
+            height=600,
             on_select="rerun",
         )
 

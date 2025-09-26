@@ -711,6 +711,8 @@ def main():
                 value=False
             )
 
+            st.sidebar.markdown("### Filtros")
+
             # Date filter
             if '_time' in df.columns:
                 min_date = df['_time'].min().date()
@@ -734,7 +736,7 @@ def main():
                 max_hour = int(df['hour'].max())
                 
                 hour_range = st.slider(
-                    "Seleccionar rango de horas:",
+                    "Seleccionar el rango de horas:",
                     min_value=min_hour,
                     max_value=max_hour,
                     value=(min_hour, max_hour),
@@ -775,12 +777,12 @@ def main():
             # AQI Category Filter
             aqi_categories = ["Buena", "Moderada", "Dañina para sensibles", "Dañina", "Muy dañina", "Peligrosa"]
             
-            selected_aqi_categories = st.multiselect(
+            selected_aqi_categories = st.pills(
                 "Categorías de Calidad del Aire:",
-                options=aqi_categories,
+                aqi_categories,
                 default=aqi_categories,
                 key="aqi_filter",
-                help="Selecciona las categorías AQI a mostrar"
+                selection_mode="multi"
             )
        
         # Apply filters and show filtered map
@@ -797,13 +799,9 @@ def main():
                     (filtered_df['_time'].dt.date <= end_date)
                 ]
             
-            
             filtered_df['hour'] = filtered_df['_time'].dt.hour
             filtered_df = filtered_df[filtered_df['hour'].isin(selected_hours)]
-        
             filtered_df = filtered_df[filtered_df['location'].isin(selected_routes)]
-            
-            
             
             # Show filtered results
             if not filtered_df.empty:
@@ -828,7 +826,7 @@ def main():
                 <div style="text-align: center;"> Contaminación promedio por ruta </div>
                 """)
 
-                dfchart = df.groupby('location')['PM2.5'].mean()
+                dfchart = df.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
 
                 # Create color list based on contamination classification using the same thresholds
                 def get_route_colors(pm25_values):
@@ -874,7 +872,7 @@ def main():
                 dfchart2 = df.groupby('Date-Time')['CO2'].mean()
                 
                 fig2 = px.line({'Date-Time': dfchart2.index,
-                'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2")
+                'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2", color_discrete_sequence=["#0fa539"])
                 st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:

@@ -16,7 +16,7 @@ def get_cached_client() -> InfluxDBClient:
 # Cachea datos (dependen de parámetros; pon TTLs cortos).
 @st.cache_data(ttl=10, show_spinner=False)
 def cached_query(flux: str):
-    client = get_cached_client()
+    client = get_cached_client( )
     return run_query(client, flux)
 
 def main():
@@ -146,15 +146,43 @@ def main():
         with col_pie:
             try:
                 st.markdown("#### Distribución de Categorías")
-                
+
                 # Calculate category distribution
                 category_counts = df['pm25_category'].value_counts()
+
+                dfchart = df.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
+
+                # Create color list based on contamination classification using the same thresholds
+                def get_route_colors(pm25_values):
+                    # Define PM2.5 thresholds (same as in plot_map function)
+                    thresholds = [
+                        (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                        (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                        (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                        (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                        (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                        (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                    ]
+                    
+                    colors = []
+                    for pm25_value in pm25_values:
+                        for low, high, aqi_low, aqi_high, category, color_hex in thresholds:
+                            if low <= pm25_value <= high:
+                                colors.append(color_hex)
+                                break
+                        else:
+                            # If outside range, use the last threshold color
+                            colors.append(thresholds[-1][5])
+                    return colors
+                
+                route_colors = get_route_colors(dfchart.values)
                 
                 # Create pie chart
                 fig_pie = px.pie(
                     values=category_counts.values,
                     names=category_counts.index,
-                    title=""
+                    title="", 
+                    color_discrete_sequence=route_colors
                 )
                 
                 # Update layout for better appearance in column
@@ -250,8 +278,6 @@ def main():
                 
             except Exception as e:
                 st.warning(f"No se pudieron calcular las estadísticas diarias: {e}")
-        
-        st.markdown("---")
 
     with st.container(key="graphs"):
         with st.container(key="graph1"):
@@ -273,8 +299,6 @@ def main():
             """
             <div style="text-align: center;"> Contaminación por día </div>
             """)
-            
-            
 
             dfchart4 = df.groupby('_time')['CO2'].mean()
             

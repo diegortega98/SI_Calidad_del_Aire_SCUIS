@@ -100,7 +100,7 @@
     backdrop-filter: blur(15.4px);
     -webkit-backdrop-filter: blur(15.4px);
     top: 2%;
-    left: .5%;
+    left: 1%;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     background-color: rgba(138, 138, 138, 0.4);
     border-radius: 12px;
@@ -135,7 +135,7 @@
     width: 5%;
     height: 10%;
     top: 2%;
-    left: .5%;
+    left: 1%;
     backdrop-filter: blur(15.4px);
     -webkit-backdrop-filter: blur(15.4px);
     background-color: rgba(138, 138, 138, 0.4);
@@ -187,12 +187,7 @@
 }
 
 
-.st-key-graphx1{
-    flex: 50%;
-    overflow: hidden;
-}
-
-.st-key-graphx2{
+.st-key-graphx1, .st-key-graphx2{
     flex: 50%;
     overflow: hidden;
 }
@@ -201,9 +196,28 @@
     padding: 12px;
     background-color: white;
     border-radius:12px;
-    min-height:720px;
+    min-height:620px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
+
+[data-baseweb="button-group"]{
+    padding: 8px;
+    background-color: #f1f1f1;
+    border-radius:12px;
+}
+
+[data-baseweb="slider"]{
+    padding: 12px;
+    background-color: #f1f1f1;
+    border-radius:12px;
+}
+
+[data-testid="stBaseButton-pillsActive"]{
+    background-color: #0fa539;
+    border-radius:6px;
+    color: var(--bodyTextColorWhite);
+}
+
 
 /* ============================================
    RESPONSIVE DESIGN
