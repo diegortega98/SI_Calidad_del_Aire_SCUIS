@@ -3,6 +3,7 @@ import plotly.express as px
 import pandas as pd
 import pydeck as pdk
 import time
+from datetime import datetime
 from data.connection import get_client_or_raise, run_query, flux_query, ConnectionNotReady
 from influxdb_client import InfluxDBClient
 
@@ -628,13 +629,13 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
             if 'location' in fresh_df.columns and selected_routes:
                 filtered_df = filtered_df[filtered_df['location'].isin(selected_routes)]
 
-            if not filtered_df.empty:
+            if not filtered_df.empty:  
+                # Plot the refreshed map
+                plot_map(filtered_df, selected_parameters, selected_aqi_categories, auto_refresh=True)
+
                 # Show refresh indicator
                 current_time = pd.Timestamp.now().strftime("%H:%M:%S")
                 st.caption(f"Última actualización: {current_time}")
-                
-                # Plot the refreshed map
-                plot_map(filtered_df, selected_parameters, selected_aqi_categories, auto_refresh=True)
             else:
                 st.warning("No hay datos que coincidan con los filtros para la actualización automática.")
         else:
@@ -642,29 +643,6 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
         
     except Exception as e:
         st.error(f"Error al actualizar mapa: {e}")
-
-@st.fragment()
-def graphs(df):
-    with st.container(key="graphs"):
-        with st.container(key="graph1"):
-            
-            st.html(
-            """
-            <div style="text-align: center;"> Contaminación por ruta </div>
-            """)
-            st.line_chart(
-                df.groupby('route_int')['PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
-            )
-
-        with st.container(key="graph2"):
-            st.html(
-            """
-            <div style="text-align: center;"> Contaminación por día </div>
-            """)
-            
-            st.bar_chart(
-                df.groupby(df['_time'].dt.date)['metrics_0_fields_PM2.5'].mean().sort_values(ascending=False), use_container_width=True,
-            )
 
 def main():
     st.html("""
@@ -700,7 +678,7 @@ def main():
             try:
                 last_time = df['_time'].max()
                 last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
-                st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
+                st.caption(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
         
@@ -714,7 +692,7 @@ def main():
                 value=False
             )
 
-            st.sidebar.markdown("### Filtros")
+            st.markdown("### Filtros del mapa")
 
             # Date filter
             if '_time' in df.columns:
@@ -772,7 +750,6 @@ def main():
             # Parameters filter - Multiselect
             default_selected = ["PM2.5"]
 
-           
             selected_params = st.multiselect(
                 "Parámetros a Mostrar:",
                 options=available_parameters,
@@ -824,63 +801,59 @@ def main():
                 plot_map(pd.DataFrame(), [], [], auto_refresh=False)
 
 
+        with st.container(key="dailies"):
+            st.html(f"""<div class="dailytitle"> Gráficos en base a los últimos 7 días </div>""")
+            with st.container(key="graphs"):
+                with st.container(key="graph1"):
+                    st.html("""<div class="graphtitle"> Concentración promedio de PM2.5 por ruta </div>""")
 
-        with st.container(key="graphs"):
-            with st.container(key="graph1"):
-                
-                st.html(
-                """
-                <div style="text-align: center;"> Contaminación promedio por ruta </div>
-                """)
+                    df["_time"] = pd.to_datetime(df["_time"].dt.tz_localize(None))
+                    dfchart = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart = dfchart.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
 
-                dfchart = df.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
-
-                # Create color list based on contamination classification using the same thresholds
-                def get_route_colors(pm25_values):
-                    # Define PM2.5 thresholds (same as in plot_map function)
-                    thresholds = [
-                        (0.0, 12.0, 0, 50, "Buena", "#00e400"),
-                        (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
-                        (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
-                        (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
-                        (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
-                        (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
-                    ]
+                    # Create color list based on contamination classification using the same thresholds
+                    def get_route_colors(pm25_values):
+                        # Define PM2.5 thresholds (same as in plot_map function)
+                        thresholds = [
+                            (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                            (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                            (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                            (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                            (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                            (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                        ]
+                        
+                        colors = []
+                        for pm25_value in pm25_values:
+                            for low, high, aqi_low, aqi_high, category, color_hex in thresholds:
+                                if low <= pm25_value <= high:
+                                    colors.append(color_hex)
+                                    break
+                            else:
+                                # If outside range, use the last threshold color
+                                colors.append(thresholds[-1][5])
+                        return colors
                     
-                    colors = []
-                    for pm25_value in pm25_values:
-                        for low, high, aqi_low, aqi_high, category, color_hex in thresholds:
-                            if low <= pm25_value <= high:
-                                colors.append(color_hex)
-                                break
-                        else:
-                            # If outside range, use the last threshold color
-                            colors.append(thresholds[-1][5])
-                    return colors
-                
-                route_colors = get_route_colors(dfchart.values)
+                    route_colors = get_route_colors(dfchart.values)
 
-                fig = px.bar({'location': dfchart.index,
-                'Average PM2.5': dfchart.values}, x="location", y="Average PM2.5", 
-                color_discrete_sequence=route_colors)
-                fig.update_traces(showlegend=False)
-                st.plotly_chart(fig, use_container_width=True, theme=None)
+                    fig = px.bar({'location': dfchart.index,
+                    'Average PM2.5': dfchart.values}, x="location", y="Average PM2.5", 
+                    color_discrete_sequence=route_colors)
+                    st.plotly_chart(fig, use_container_width=True, theme=None)
 
 
-            with st.container(key="graph2"):
-                st.html(
-                """
-                <div style="text-align: center;"> Contaminación promedio por hora </div>
-                """)
-                
-                df.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
-                inplace=True)
+                with st.container(key="graph2"):
+                    st.html("""<div class="graphtitle"> Concentración promedio de C02 por hora </div>""")
 
-                dfchart2 = df.groupby('Date-Time')['CO2'].mean()
-                
-                fig2 = px.line({'Date-Time': dfchart2.index,
-                'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2", color_discrete_sequence=["#0fa539"])
-                st.plotly_chart(fig2, use_container_width=True, theme=None)
+                    dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart2.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
+                    inplace=True)
+
+                    dfchart2 = dfchart2.groupby('Date-Time')['CO2'].mean()
+                    
+                    fig2 = px.line({'Date-Time': dfchart2.index,
+                    'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2", color_discrete_sequence=["#0fa539"])
+                    st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

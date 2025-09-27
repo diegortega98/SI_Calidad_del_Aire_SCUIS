@@ -58,7 +58,7 @@ def main():
             try:
                 last_time = df['_time'].max()
                 last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
-                st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}",width="stretch")
+                st.caption(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
 
@@ -106,163 +106,165 @@ def main():
             category_count = df['pm25_category'].value_counts().iloc[0] if not df['pm25_category'].value_counts().empty else 0
             category_percentage = (category_count / len(df) * 100) if len(df) > 0 else 0
             
-            # Display cards in columns
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                st.metric(
-                    label="Hora Más Peligrosa",
-                    value=f"{most_dangerous_hour}:00",
-                    delta=f"{max_pm25_value:.1f} μg/m³"
-                )
-            
-            with col2:
-                st.metric(
-                    label="Ruta Más Contaminada",
-                    value=most_contaminated_route,
-                    delta=f"{max_route_pm25:.1f} μg/m³"
-                )
-            
-            with col3:
-                st.metric(
-                    label="Ruta Menos Contaminada", 
-                    value=least_contaminated_route,
-                    delta=f"{min_route_pm25:.1f} μg/m³"
-                )
-            
-            with col4:
-                st.metric(
-                    label="Categoría Más Común",
-                    value=most_common_category,
-                    delta=f"{category_percentage:.1f}% de mediciones"
-                )
+            with st.container(key="info"):
+                with st.container(key="col1"):
+                    st.html("""<div class="graphtitle"> Hora Más Peligrosa </div>""")
+                    st.metric(
+                        label="Hora Más Peligrosa",
+                        label_visibility="collapsed",
+                        value=f"{most_dangerous_hour}:00",
+                        delta=f"{max_pm25_value:.1f} μg/m³"
+                    )
+                
+                with st.container(key="col2"):
+                    st.html("""<div class="graphtitle"> Ruta Más Contaminada </div>""")
+                    st.metric(
+                        label="Ruta Más Contaminada",
+                        label_visibility="collapsed",
+                        value=most_contaminated_route,
+                        delta=f"{max_route_pm25:.1f} μg/m³"
+                    )
+                
+                with st.container(key="col3"):
+                    st.html("""<div class="graphtitle"> Ruta Menos Contaminada </div>""")
+                    st.metric(
+                        label="Ruta Menos Contaminada",
+                        label_visibility="collapsed", 
+                        value=least_contaminated_route,
+                        delta=f"{min_route_pm25:.1f} μg/m³"
+                    )
+                
+                with st.container(key="col4"):
+                    st.html("""<div class="graphtitle"> Categoría Más Común </div>""")
+                    st.metric(
+                        label="Categoría Más Común",
+                        label_visibility="collapsed",
+                        value=most_common_category,
+                        delta=f"{category_percentage:.1f}% de mediciones"
+                    )
                 
         except Exception as e:
             st.warning(f"No se pudieron calcular los indicadores clave: {e}")
         
-        st.markdown("---")
-        
-        # Two-column layout for pie chart and daily stats
-        col_pie, col_daily = st.columns(2)
-        
-        with col_pie:
-            try:
-                st.markdown("#### Distribución de Categorías")
-                
-                # Calculate category distribution
-                category_counts = df['pm25_category'].value_counts()
-                
-                # Create pie chart
-                fig_pie = px.pie(
-                    values=category_counts.values,
-                    names=category_counts.index,
-                    title=""
-                )
-                
-                # Update layout for better appearance in column
-                fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-                fig_pie.update_layout(
-                    showlegend=True,
-                    height=400,
-                    margin=dict(t=20, b=20, l=20, r=20)
-                )
-                
-                st.plotly_chart(fig_pie, use_container_width=True, theme=None, key="pie_categories")
-                
-            except Exception as e:
-                st.warning(f"No se pudo generar el gráfico de categorías: {e}")
-        
-        with col_daily:
-            try:
-                st.markdown("#### Estadísticas Diarias")
-                
-                # Calculate daily statistics
-                df['date'] = df['_time'].dt.date
-                daily_stats = df.groupby('date').agg({
-                    'PM2.5': ['mean', 'max', 'min', 'count'],
-                    'CO2': ['mean', 'max', 'min'],
-                    'Temperature': ['mean', 'max', 'min']
-                }).round(2)
-                
-                # Flatten column names
-                daily_stats.columns = ['_'.join(col).strip() for col in daily_stats.columns]
-                
-                # Date selector
-                available_dates = sorted(daily_stats.index.tolist(), reverse=True)
-                if available_dates:
-                    selected_date = st.selectbox(
-                        "Seleccionar fecha:",
-                        options=available_dates,
-                        index=0,  # Default to most recent date
-                        key="date_selector"
+        with st.container(key="main"):
+            with st.container(key="pie"):
+                try:
+                    st.html(
+                    """
+                    <div class="graphtitle"> Distribución de Categorías de AQI </div>
+                    """)
+                    
+                    # Calculate category distribution
+                    category_counts = df['pm25_category'].value_counts()
+                    
+                    # Create pie chart
+                    fig_pie = px.pie(
+                        values=category_counts.values,
+                        names=category_counts.index,
+                        title=""
                     )
                     
-                    # Display stats for selected date
-                    if selected_date in daily_stats.index:
-                        selected_stats = daily_stats.loc[selected_date]
-                        
-                        st.markdown(f"**Estadísticas para {selected_date}**")
-                        
-                        col_pm, col_co2, col_temp = st.columns(3)
-                        
-                        with col_pm:
-                            st.metric(
-                                "PM2.5 Promedio",
-                                f"{selected_stats['PM2.5_mean']:.1f}",
-                                delta=f"Max: {selected_stats['PM2.5_max']:.1f}"
-                            )
-                        
-                        with col_co2:
-                            st.metric(
-                                "CO2 Promedio", 
-                                f"{selected_stats['CO2_mean']:.1f}",
-                                delta=f"Max: {selected_stats['CO2_max']:.1f}"
-                            )
-                        
-                        with col_temp:
-                            st.metric(
-                                "Temp Promedio",
-                                f"{selected_stats['Temperature_mean']:.1f}°C",
-                                delta=f"Max: {selected_stats['Temperature_max']:.1f}°C"
-                            )
-                        
-                        # Show additional details for selected date
-                        st.markdown("**Detalles del día:**")
-                        
-                        # Create a more compact table format
-                        details_data = {
-                            "Métrica": ["PM2.5", "CO2", "Temperatura"],
-                            "Mínimo": [
-                                f"{selected_stats['PM2.5_min']:.1f} μg/m³",
-                                f"{selected_stats['CO2_min']:.1f} ppm",
-                                f"{selected_stats['Temperature_min']:.1f}°C"
-                            ],
-                            "Máximo": [
-                                f"{selected_stats['PM2.5_max']:.1f} μg/m³",
-                                f"{selected_stats['CO2_max']:.1f} ppm",
-                                f"{selected_stats['Temperature_max']:.1f}°C"
-                            ]
-                        }
-                        
-                        details_df = pd.DataFrame(details_data)
-                        st.dataframe(details_df, hide_index=True, height=140)
+                    # Update layout for better appearance in column
+                    fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                    fig_pie.update_layout(
+                        showlegend=True,
+                        height=400,
+                        margin=dict(t=20, b=20, l=20, r=20)
+                    )
                     
-                
-                
-                
-            except Exception as e:
-                st.warning(f"No se pudieron calcular las estadísticas diarias: {e}")
-        
-        st.markdown("---")
+                    st.plotly_chart(fig_pie, use_container_width=True, theme=None, key="pie_categories")
+                    
+                except Exception as e:
+                    st.warning(f"No se pudo generar el gráfico de categorías: {e}")
+            
+            with st.container(key="daily"):
+                try:
+                    st.html(
+                    """
+                    <div class="graphtitle"> Estadísticas Diarias </div>
+                    """)
+                    
+                    # Calculate daily statistics
+                    df['date'] = df['_time'].dt.date
+                    daily_stats = df.groupby('date').agg({
+                        'PM2.5': ['mean', 'max', 'min', 'count'],
+                        'CO2': ['mean', 'max', 'min'],
+                        'Temperature': ['mean', 'max', 'min']
+                    }).round(2)
+                    
+                    # Flatten column names
+                    daily_stats.columns = ['_'.join(col).strip() for col in daily_stats.columns]
+                    
+                    # Date selector
+                    available_dates = sorted(daily_stats.index.tolist(), reverse=True)
+                    if available_dates:
+                        selected_date = st.selectbox(
+                            "Seleccionar fecha:",
+                            options=available_dates,
+                            index=0,  # Default to most recent date
+                            key="date_selector"
+                        )
+                        
+                        # Display stats for selected date
+                        if selected_date in daily_stats.index:
+                            selected_stats = daily_stats.loc[selected_date]
+                            
+                            st.markdown(f"**Estadísticas para {selected_date}**")
+                            
+                            col_pm, col_co2, col_temp = st.columns(3)
+                            
+                            with col_pm:
+                                st.metric(
+                                    "PM2.5 Promedio",
+                                    f"{selected_stats['PM2.5_mean']:.1f}",
+                                    delta=f"Max: {selected_stats['PM2.5_max']:.1f}"
+                                )
+                            
+                            with col_co2:
+                                st.metric(
+                                    "CO2 Promedio", 
+                                    f"{selected_stats['CO2_mean']:.1f}",
+                                    delta=f"Max: {selected_stats['CO2_max']:.1f}"
+                                )
+                            
+                            with col_temp:
+                                st.metric(
+                                    "Temp Promedio",
+                                    f"{selected_stats['Temperature_mean']:.1f}°C",
+                                    delta=f"Max: {selected_stats['Temperature_max']:.1f}°C"
+                                )
+                            
+                            # Show additional details for selected date
+                            st.markdown("**Detalles del día:**")
+                            
+                            # Create a more compact table format
+                            details_data = {
+                                "Métrica": ["PM2.5", "CO2", "Temperatura"],
+                                "Mínimo": [
+                                    f"{selected_stats['PM2.5_min']:.1f} μg/m³",
+                                    f"{selected_stats['CO2_min']:.1f} ppm",
+                                    f"{selected_stats['Temperature_min']:.1f}°C"
+                                ],
+                                "Máximo": [
+                                    f"{selected_stats['PM2.5_max']:.1f} μg/m³",
+                                    f"{selected_stats['CO2_max']:.1f} ppm",
+                                    f"{selected_stats['Temperature_max']:.1f}°C"
+                                ]
+                            }
+                            
+                            details_df = pd.DataFrame(details_data)
+                            st.dataframe(details_df, hide_index=True, height=140)
+                        
+                except Exception as e:
+                    st.warning(f"No se pudieron calcular las estadísticas diarias: {e}")
 
-    with st.container(key="graphs"):
+    with st.container(key="graphsy"):
         with st.container(key="graph1"):
             
             st.html(
             """
-            <div style="text-align: center;"> Coordenadas con concentraciones más altas </div>
+            <div class="graphtitle"> Coordenadas con concentraciones más altas de PM2.5 </div>
             """)
-
 
             dfchart3 = df.groupby('location')['PM2.5'].mean()
 
@@ -273,10 +275,8 @@ def main():
         with st.container(key="graph2"):
             st.html(
             """
-            <div style="text-align: center;"> Contaminación por día </div>
+            <div class="graphtitle"> Evolucion de la PM2.5 contaminacion </div>
             """)
-            
-            
 
             dfchart4 = df.groupby('_time')['CO2'].mean()
             
@@ -289,7 +289,7 @@ def main():
             
             st.html(
             """
-            <div style="text-align: center;"> Coordenadas con concentraciones más altas </div>
+            <div class="graphtitle"> Rutas con concentraciones más altas </div>
             """)
 
            
@@ -302,7 +302,7 @@ def main():
         with st.container(key="graphx2"):
             st.html(
             """
-            <div style="text-align: center;"> Contaminación por día </div>
+            <div class="graphtitle"> Contaminación por día </div>
             """)
             
             dfchart6 = df.groupby('_time')['CO2'].mean()

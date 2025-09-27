@@ -155,7 +155,7 @@ def main():
             try:
                 last_time = df['_time'].max()
                 last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
-                st.sidebar.markdown(f"Últimos datos recibidos: {last_time_str}", width="stretch")
+                st.caption(f"Últimos datos recibidos: {last_time_str}", width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")
             
@@ -176,8 +176,8 @@ def main():
             # Date filter
             if '_time' in df.columns:
                 # Get available dates
-                df['date_only'] = df['_time'].dt.date
-                available_dates = sorted(df['date_only'].unique())
+                df['Fecha'] = df['_time'].dt.date
+                available_dates = sorted(df['Fecha'].unique())
                 
                 if available_dates:
                     min_date = min(available_dates)
@@ -252,7 +252,6 @@ def main():
         # Format time in UTC format - separate date and time
         if '_time' in display_df.columns:
             # Separate date and time into different columns
-            display_df['Fecha'] = display_df['_time'].dt.date
             display_df['Hora'] = display_df['_time'].dt.time
             display_df = display_df.drop(columns=['_time'])
         

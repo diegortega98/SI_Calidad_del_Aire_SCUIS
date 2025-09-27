@@ -150,7 +150,18 @@
     opacity: 1.0;
 }
 
-.st-key-graphs {
+.st-key-graphs{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.st-key-main ,.st-key-graphsx, .st-key-graphsy{
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     display: flex;
     flex-direction: row;
@@ -163,21 +174,8 @@
     overflow: hidden;
 }
 
-.st-key-graph1{
-    flex: 50%;
-    overflow: hidden;
-}
-
-.st-key-graph2{
-    flex: 50%;
-    overflow: hidden;
-}
-
-.st-key-graphsx {
+.st-key-dailies{
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
     justify-content: space-between;
     align-items: stretch;
     background-color: white;
@@ -186,9 +184,27 @@
     overflow: hidden;
 }
 
+.st-key-info {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+    text-align: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+}
 
-.st-key-graphx1, .st-key-graphx2{
+.st-key-graph1, .st-key-pie, .st-key-graph2, .st-key-daily, .st-key-graphx1, .st-key-graphx2{
     flex: 50%;
+    overflow: hidden;
+}
+
+.st-key-col1, .st-key-col2, .st-key-col3, .st-key-col4{
+    flex: 25%;
     overflow: hidden;
 }
 
@@ -218,13 +234,42 @@
     color: var(--bodyTextColorWhite);
 }
 
+[data-testid="stSidebarUserContent"]{
+    padding: 24 0 0 0;
+}
+
+[data-testid="stSidebarCollapseButton"]{
+    visibility:visible;
+}
+
+[data-testid="stMetricValue"]
+{
+    font-size: 1.25rem; 
+}
+
+.st-key-info [data-testid="stVerticalBlock"]
+{
+    gap: 0; 
+}
+
+.graphtitle{
+    font-size: 1.25rem; 
+    font-weight: 600; 
+    text-align: center;
+}
+
+.dailytitle{
+    font-size: 1.50rem; 
+    font-weight: 600; 
+    text-align: center;
+}
 
 /* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
-@media (max-width: 768px) {
-  .st-key-graphs {
+@media (max-width: 1100px) {
+  .st-key-graphs, .st-key-graphsx, .st-key-main, .st-key-info, .st-key-graphsy {
     flex-wrap: wrap;
   }
 }
