@@ -7,6 +7,7 @@ from influxdb_client import InfluxDBClient
 from influxdb_client.client.exceptions import InfluxDBError
 import dotenv
 import pandas as pd
+from utils.timezone_utils import convert_to_colombia_time
 
 # --------- Config ---------
 
@@ -74,10 +75,13 @@ def get_client_or_raise() -> InfluxDBClient:
 
 def run_query(client: InfluxDBClient, flux: str):
     """
-    Ejecuta una query Flux
+    Ejecuta una query Flux y convierte timestamps a zona horaria colombiana
     """
-    print(client.query_api().query_data_frame(flux).columns)
-    return client.query_api().query_data_frame(flux)
+    df = client.query_api().query_data_frame(flux)
+    print(df.columns)
+    # Convert timestamps to Colombian timezone
+    df = convert_to_colombia_time(df)
+    return df
 
 
 def flux_query(bucket: Optional[str] = None, start: str = "-1h") -> str:

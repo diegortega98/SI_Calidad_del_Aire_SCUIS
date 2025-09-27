@@ -5,6 +5,7 @@ import pydeck as pdk
 import time
 from data.connection import get_client_or_raise, run_query, flux_query, ConnectionNotReady
 from influxdb_client import InfluxDBClient
+from utils.timezone_utils import format_colombia_time
 
 # Cachea el cliente .
 @st.cache_resource(show_time=True,show_spinner=False)
@@ -57,7 +58,7 @@ def main():
             #Obtener ultima conexión
             try:
                 last_time = df['_time'].max()
-                last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
+                last_time_str = format_colombia_time(last_time)
                 st.caption(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   

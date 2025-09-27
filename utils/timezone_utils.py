@@ -32,6 +32,7 @@ def format_colombia_time(timestamp):
 
 def get_current_colombia_time():
     """Get current time in Colombian timezone"""
+    utc_now = datetime.utcnow()
     utc_now = pytz.utc.localize(utc_now)
     colombia_now = utc_now.astimezone(COLOMBIA_TZ)
     return colombia_now

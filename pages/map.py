@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from data.connection import get_client_or_raise, run_query, flux_query, ConnectionNotReady
 from influxdb_client import InfluxDBClient
+from utils.timezone_utils import format_colombia_time
 
 if "map_controls" not in st.session_state:
     st.session_state.map_controls = True
@@ -104,7 +105,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     "pm25_value": current_point.get("pm25_value", 0),
                     "temperature": current_point.get("temperature", 0),
                     "timestamp": (
-                        current_point["_time"].strftime("%Y-%m-%d %H:%M:%S")
+                        format_colombia_time(current_point["_time"])
                         if "_time" in current_point and pd.notna(current_point["_time"])
                         else "No disponible"
                     ),
@@ -204,7 +205,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     # Apply colors to data
                     co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
                     co2_data['co2_value'] = co2_data['CO2'].round(1)
-                    co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
+                    co2_data['timestamp'] = co2_data['_time'].apply(format_colombia_time) if '_time' in co2_data.columns else 'No disponible'
                     
                     co2_scatter = pdk.Layer(
                         'ScatterplotLayer',
@@ -297,7 +298,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
                 co2_data['co2_size'] = ((co2_data['CO2'] - co2_min) / (co2_max - co2_min) * 50 + 10) if co2_max > co2_min else 30
                 co2_data['co2_value'] = co2_data['CO2'].round(1)
-                co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
+                co2_data['timestamp'] = co2_data['_time'].apply(format_colombia_time) if '_time' in co2_data.columns else 'No disponible'
 
                 co2_scatter = pdk.Layer(
                     'ScatterplotLayer',
@@ -344,7 +345,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 temp_data['temp_color'] = temp_data['Temperature'].apply(get_temp_color)
                 temp_data['temp_size'] = ((temp_data['Temperature'] - temp_min) / (temp_max - temp_min) * 40 + 15) if temp_max > temp_min else 25
                 temp_data['temp_value'] = temp_data['Temperature'].round(1)
-                temp_data['timestamp'] = temp_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in temp_data.columns else 'No disponible'
+                temp_data['timestamp'] = temp_data['_time'].apply(format_colombia_time) if '_time' in temp_data.columns else 'No disponible'
 
                 # Use ColumnLayer for temperature (rectangular columns)
                 temp_columns = pdk.Layer(
@@ -677,7 +678,7 @@ def main():
             # Last Connection
             try:
                 last_time = df['_time'].max()
-                last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S")
+                last_time_str = format_colombia_time(last_time)
                 st.caption(f"Últimos datos recibidos: {last_time_str}",width="stretch")
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
