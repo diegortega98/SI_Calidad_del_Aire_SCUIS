@@ -165,9 +165,8 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             initial_count = len(df)
             # Remove rows where Lat or Lon is -1
             df = df[(df['Lat'] != -1) & (df['Lon'] != -1)].copy()
-            filtered_count = len(df)
-            if initial_count > filtered_count:
-                st.info(f"Se filtraron {initial_count - filtered_count} puntos con coordenadas inválidas (-1, -1)")
+            
+            
         
         # Check if we still have data after filtering
         if df.empty:
