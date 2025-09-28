@@ -810,7 +810,7 @@ def main():
             with st.container(key="graph1"):
                 st.html(
                 """
-                <div class="graphtitle"> Coordenadas con calidad de aire más baja </div>
+                <div class="graphtitle"> Puntos con concentración de PM2.5 más alta</div>
                 """)
                 
                 # Parameters filter - Multiselect
