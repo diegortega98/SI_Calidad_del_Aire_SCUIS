@@ -30,7 +30,7 @@ def format_dataframe_for_display(df, selected_parameters):
     # Columnas base que siempre se muestran
     base_columns = []
     if '_time' in display_df.columns:
-        display_df['Fecha y Hora'] = display_df['_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        display_df['Fecha y Hora'] = display_df['_time'].apply(format_colombia_time)
         base_columns.append('Fecha y Hora')
     
     if 'header_deviceId' in display_df.columns:

@@ -65,10 +65,24 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
 
         def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
             sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
+            
+            # Additional filtering for invalid coordinates within the subset
+            if 'Lat' in sub.columns and 'Lon' in sub.columns:
+                sub = sub[(sub['Lat'] != -1) & (sub['Lon'] != -1)].copy()
+            
+            # If after filtering we have less than 2 points, return empty
+            if len(sub) < 2:
+                return []
+            
             local_paths = []
             for i in range(len(sub) - 1):
                 current_point = sub.iloc[i]
                 next_point = sub.iloc[i + 1]
+
+                # Double-check coordinates are valid (safety check)
+                if (current_point.get("Lat", -1) == -1 or current_point.get("Lon", -1) == -1 or
+                    next_point.get("Lat", -1) == -1 or next_point.get("Lon", -1) == -1):
+                    continue  # Skip this path segment
 
                 # Get current point's PM2.5 category
                 current_category = current_point.get("pm25_category", "No disponible")
@@ -146,6 +160,32 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             st.pydeck_chart(r, height = 400)
             return
 
+        # Filter out invalid coordinates (-1, -1) before processing
+        if 'Lat' in df.columns and 'Lon' in df.columns:
+            initial_count = len(df)
+            # Remove rows where Lat or Lon is -1
+            df = df[(df['Lat'] != -1) & (df['Lon'] != -1)].copy()
+            filtered_count = len(df)
+            if initial_count > filtered_count:
+                st.info(f"Se filtraron {initial_count - filtered_count} puntos con coordenadas inválidas (-1, -1)")
+        
+        # Check if we still have data after filtering
+        if df.empty:
+            st.warning("No hay datos válidos para mostrar en el mapa después del filtrado de coordenadas.")
+            r = pdk.Deck(
+            layers=[], 
+            map_style='road',
+            initial_view_state=pdk.ViewState(
+            latitude=7.1333,
+            longitude=-73.1333,
+            zoom=14,
+            bearing=0,
+            pitch=45
+        )         
+            )
+            st.pydeck_chart(r, height = 400)
+            return
+
         # Crear columna layer como la media de los valores de contaminación
         pollution_columns = [CO2_COLUMN, PM25_COLUMN]
         
@@ -181,6 +221,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             # CO2 Scatter Layer
             if selected_parameters.get('CO2', False) and 'CO2' in df.columns:
                 co2_data = df.dropna(subset=['CO2']).copy()
+                # Additional filtering for invalid coordinates
+                if 'Lat' in co2_data.columns and 'Lon' in co2_data.columns:
+                    co2_data = co2_data[(co2_data['Lat'] != -1) & (co2_data['Lon'] != -1)].copy()
+                
                 if not co2_data.empty:
                     # Get min and max CO2 values for color scaling
                     co2_min = co2_data['CO2'].min()
@@ -220,6 +264,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             # Temperature Heatmap Layer
             if selected_parameters.get('Temp', False) and 'Temperature' in df.columns:
                 temp_data = df.dropna(subset=['Temperature']).copy()
+                # Additional filtering for invalid coordinates
+                if 'Lat' in temp_data.columns and 'Lon' in temp_data.columns:
+                    temp_data = temp_data[(temp_data['Lat'] != -1) & (temp_data['Lon'] != -1)].copy()
+                
                 if not temp_data.empty:
                     # Normalize temperature values for better visualization (0-1 range)
                     temp_min = temp_data['Temperature'].min()
@@ -318,6 +366,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
 
         if TEMP_COLUMN in selected_parameters:
             temp_data = df.dropna(subset=['Temperature']).copy()
+            # Additional filtering for invalid coordinates
+            if 'Lat' in temp_data.columns and 'Lon' in temp_data.columns:
+                temp_data = temp_data[(temp_data['Lat'] != -1) & (temp_data['Lon'] != -1)].copy()
+            
             if not temp_data.empty:
                 # Get min and max temperature values for color scaling
                 temp_min = temp_data['Temperature'].min()
