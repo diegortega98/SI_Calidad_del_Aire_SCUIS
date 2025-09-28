@@ -858,11 +858,12 @@ def main():
             st.html(f"""<div class="dailytitle"> Gráficos en base a los últimos 7 días </div>""")
             with st.container(key="graphs"):
                 with st.container(key="graph1"):
-                    st.html("""<div class="graphtitle"> Concentración promedio de PM2.5 por ruta </div>""")
+                    st.html("""<div class="graphtitle"> Concentración de PM2.5 y C02 por ruta </div>""")
 
                     df["_time"] = pd.to_datetime(df["_time"].dt.tz_localize(None))
-                    dfchart = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
-                    dfchart = dfchart.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
+                    dfchart1 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart1x = dfchart1.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
+                    dfchart1y = dfchart1.groupby('location')['CO2'].mean().sort_values(ascending=True)
 
                     # Create color list based on contamination classification using the same thresholds
                     def get_route_colors(pm25_values):
@@ -887,25 +888,31 @@ def main():
                                 colors.append(thresholds[-1][5])
                         return colors
                     
-                    route_colors = get_route_colors(dfchart.values)
+                    route_colors = get_route_colors(dfchart1x.values)
 
-                    fig = px.bar({'location': dfchart.index,
-                    'Average PM2.5': dfchart.values}, x="location", y="Average PM2.5", 
-                    color_discrete_sequence=route_colors)
+                    fig = px.bar({'Ruta': dfchart1x.index,
+                    'Promedio PM2.5': dfchart1x.values, 'Promedio CO2': dfchart1y.values,},
+                    x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
+
                     st.plotly_chart(fig, use_container_width=True, theme=None)
 
-
                 with st.container(key="graph2"):
-                    st.html("""<div class="graphtitle"> Concentración promedio de C02 por hora </div>""")
+                    st.html(
+                    """
+                    <div class="graphtitle"> Evolución por día del PM2.5 y C02 </div>
+                    """)
 
                     dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
-                    dfchart2.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
-                    inplace=True)
-
-                    dfchart2 = dfchart2.groupby('Date-Time')['CO2'].mean()
                     
-                    fig2 = px.line({'Date-Time': dfchart2.index,
-                    'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2", color_discrete_sequence=["#0fa539"])
+                    dfchart2x = dfchart2.groupby('_time')['PM2.5'].mean()
+                    dfchart2y = dfchart2.groupby('_time')['CO2'].mean()
+
+                    fig2 = px.line({'Fecha': dfchart2x.index,
+                    'Promedio PM2.5': dfchart2x.values, 'Promedio CO2': dfchart2y.values,},
+                    x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
+                    
                     st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
