@@ -64,9 +64,13 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             return paths_data
 
         def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
-            sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
+            # Ensure data is sorted by time within each subset
+            if "_time" in sub.columns:
+                sub = sub.sort_values("_time").copy()
+            else:
+                sub = sub.copy()
             
-            # Additional filtering for invalid coordinates within the subset
+            # Filter out invalid coordinates (-1, -1) within the subset
             if 'Lat' in sub.columns and 'Lon' in sub.columns:
                 sub = sub[(sub['Lat'] != -1) & (sub['Lon'] != -1)].copy()
             
@@ -75,14 +79,34 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 return []
             
             local_paths = []
+            # Create simple paths between consecutive valid points
             for i in range(len(sub) - 1):
                 current_point = sub.iloc[i]
                 next_point = sub.iloc[i + 1]
 
-                # Double-check coordinates are valid (safety check)
-                if (current_point.get("Lat", -1) == -1 or current_point.get("Lon", -1) == -1 or
-                    next_point.get("Lat", -1) == -1 or next_point.get("Lon", -1) == -1):
-                    continue  # Skip this path segment
+                # Check time gap - don't create path if more than 3 minutes apart
+                if '_time' in sub.columns:
+                    current_time = current_point['_time']
+                    next_time = next_point['_time']
+                    
+                    if pd.notna(current_time) and pd.notna(next_time):
+                        try:
+                            time_diff = abs((next_time - current_time).total_seconds())
+                            if time_diff > 180:  # 3 minutes = 180 seconds
+                                continue  # Skip this path segment due to time gap
+                        except Exception:
+                            # If time comparison fails, skip this segment to be safe
+                            continue
+
+                # Check distance gap - don't create path if points are too far apart
+                # Calculate approximate distance in degrees (rough estimate)
+                lat_diff = abs(next_point['Lat'] - current_point['Lat'])
+                lon_diff = abs(next_point['Lon'] - current_point['Lon'])
+                distance_degrees = (lat_diff**2 + lon_diff**2)**0.5
+                
+                # Skip if distance is more than ~0.01 degrees (roughly 1km)
+                if distance_degrees > 0.01:
+                    continue  # Skip this path segment due to large distance gap
 
                 # Get current point's PM2.5 category
                 current_category = current_point.get("pm25_category", "No disponible")
@@ -106,10 +130,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 path = {
                     "start_lon": current_point["Lon"],
                     "start_lat": current_point["Lat"],
-                    "start_elevation": 50,  # Add elevation to start point
+                    "start_elevation": 10,  # Reduced elevation to start point
                     "end_lon": next_point["Lon"],
                     "end_lat": next_point["Lat"],
-                    "end_elevation": 50,    # Add elevation to end point
+                    "end_elevation": 10,    # Reduced elevation to end point
                     "R": path_color[0],
                     "G": path_color[1],
                     "B": path_color[2],
@@ -129,10 +153,19 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             return local_paths
 
         if "location" in df.columns:
-            for _, sub in df.groupby("location"):
-                paths_data.extend(_build_for_subset(sub))
+            # Group by location to ensure we don't connect paths between different routes
+            for location, sub in df.groupby("location"):
+                if len(sub) >= 2:  # Only process if we have at least 2 points
+                    paths_data.extend(_build_for_subset(sub))
         else:
-            paths_data = _build_for_subset(df)
+            # If no location column, check if we have device ID or other grouping column
+            if "header_deviceId" in df.columns:
+                for device, sub in df.groupby("header_deviceId"):
+                    if len(sub) >= 2:
+                        paths_data.extend(_build_for_subset(sub))
+            else:
+                # Last resort - process all data together but with strict validation
+                paths_data = _build_for_subset(df)
 
         return paths_data
     

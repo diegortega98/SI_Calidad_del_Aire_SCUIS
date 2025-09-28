@@ -203,27 +203,71 @@ def plot_map2(df, selected_parameters, selected_aqi_categories=None, auto_refres
                 )
                 layers.append(temp_heatmap)
     
-    # Add PM2.5 paths layer only if PM2.5 is selected
+    # Add PM2.5 scatter plot if PM2.5 is selected
     if PM25_COLUMN in selected_parameters:
-        # Convert to DataFrame and add LineLayer for PM2.5 paths
-        
-        paths_df = build_paths(df, selected_aqi_categories)
-        # Define a LineLayer to display paths on the map
-        line_layer = pdk.Layer(
-            'ScatterplotLayer',
-            data=paths_df,
-            get_position='[Lon, Lat]',
-            get_width=5,
-            highlight_color=[0, 0, 255],
-            picking_radius=1,
-            auto_highlight=True,
-            pickable=True,
-        )
-        
-        layers.append(line_layer)
+        # Create PM2.5 scatter plot using individual data points
+        pm25_data = df.dropna(subset=['PM2.5']).copy()
+        if not pm25_data.empty:
+            # Get min and max PM2.5 values for size scaling
+            pm25_min = pm25_data['PM2.5'].min()
+            pm25_max = pm25_data['PM2.5'].max()
+            
+            # Apply colors and categories using existing function
+            pm25_data[['pm25_color', 'pm25_category']] = pm25_data['PM2.5'].apply(
+                lambda x: pd.Series(get_pm25_color_and_category(x))
+            )
+            
+            # Ensure pm25_color is properly formatted as list
+            pm25_data['pm25_color'] = pm25_data['pm25_color'].apply(
+                lambda x: list(x) if hasattr(x, '__iter__') and not isinstance(x, str) else [0, 255, 0, 180]
+            )
+            
+            # Calculate size based on PM2.5 value (higher values = larger circles)
+            if pm25_max > pm25_min:
+                pm25_data['pm25_size'] = ((pm25_data['PM2.5'] - pm25_min) / (pm25_max - pm25_min) * 40 + 15).astype(float)
+            else:
+                pm25_data['pm25_size'] = 25.0
+                
+            pm25_data['pm25_value'] = pm25_data['PM2.5'].round(1).astype(float)
+            pm25_data['timestamp'] = pm25_data['_time'].apply(format_colombia_time) if '_time' in pm25_data.columns else 'No disponible'
+            
+            # Convert coordinates to float to ensure serialization
+            pm25_data['Lat'] = pm25_data['Lat'].astype(float)
+            pm25_data['Lon'] = pm25_data['Lon'].astype(float)
+            
+            # Convert all data to native Python types for JSON serialization
+            pm25_data_clean = pd.DataFrame()
+            pm25_data_clean['Lat'] = pm25_data['Lat'].astype(float).tolist()
+            pm25_data_clean['Lon'] = pm25_data['Lon'].astype(float).tolist()
+            pm25_data_clean['pm25_color'] = pm25_data['pm25_color'].tolist()
+            pm25_data_clean['pm25_size'] = pm25_data['pm25_size'].astype(float).tolist()
+            pm25_data_clean['pm25_value'] = pm25_data['pm25_value'].astype(float).tolist()
+            pm25_data_clean['pm25_category'] = pm25_data['pm25_category'].astype(str).tolist()
+            pm25_data_clean['timestamp'] = pm25_data['timestamp'].astype(str).tolist()
+            pm25_data_clean['location'] = pm25_data.get('location', 'No disponible').astype(str).tolist() if 'location' in pm25_data.columns else ['No disponible'] * len(pm25_data)
+            
+            # Create ScatterplotLayer for PM2.5 data
+            pm25_scatter = pdk.Layer(
+                'ScatterplotLayer',
+                data=pm25_data_clean,
+                get_position='[Lon, Lat]',
+                get_color='pm25_color',
+                get_radius='pm25_size',
+                radius_scale=1,
+                radius_min_pixels=8,
+                radius_max_pixels=50,
+                pickable=True,
+                auto_highlight=True,
+                opacity=0.8
+            )
+            
+            layers.append(pm25_scatter)
     
     if CO2_COLUMN in selected_parameters:
         co2_data = df.dropna(subset=['CO2']).copy()
+        co2_data = co2_data[co2_data['CO2'] != -1]
+        # Sort by CO2 values (highest to lowest) and take first 10
+        co2_data = co2_data.nlargest(10, 'CO2')
         if not co2_data.empty:
             # Get min and max CO2 values for color scaling
             co2_min = co2_data['CO2'].min()
@@ -321,7 +365,7 @@ def plot_map2(df, selected_parameters, selected_aqi_categories=None, auto_refres
     view_state = pdk.ViewState(
         latitude=df['Lat'].mean(),
         longitude=df['Lon'].mean(),
-        zoom=14,
+        zoom=10,
         bearing=0,
         pitch=45
     )
@@ -332,7 +376,7 @@ def plot_map2(df, selected_parameters, selected_aqi_categories=None, auto_refres
         map_style='road',
         initial_view_state=view_state,
         tooltip={
-            "html": "<b>PM2.5:</b> {pm25_value} μg/m³<b>Calidad:</b> {pm25_category}<br/><b>Temp:</b> {temperature} °C<br/><b>Tiempo:</b> {timestamp}<br/><b>Ubicación:</b> {location}",
+            "html": "<b>PM2.5:</b> {pm25_value} μg/m³<br/><b>Ubicación:</b> {location}",
             "style": {
                 "backgroundColor": "rgba(0, 0, 0, 0.8)",
                 "color": "white",
@@ -363,6 +407,18 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
                 ]
     
+    # Filter out invalid data (-1 values in key columns)
+    df = df[
+        (df.get('CO2', 0) != -1) & 
+        (df.get('PM2.5', 0) != -1) & 
+        (df.get('Lat', 0) != -1) & 
+        (df.get('Lon', 0) != -1)
+    ].copy()
+    
+    if df.empty:
+        st.warning("No hay datos válidos para mostrar después del filtrado.")
+        return
+    
     # Functions ------------------------------------------------
     def get_pm25_color_and_category(pm25_value):
                 for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
@@ -377,79 +433,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 g = int(PM25_THRESHOLDS[-1][5][3:5], 16)
                 b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
                 return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
-
-    def build_paths(df: pd.DataFrame, selected_aqi_categories=None) -> list[dict]:
-        
-        paths_data = []
-        if len(df) < 2:
-            return paths_data
-
-        def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
-            sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
-            local_paths = []
-            for i in range(len(sub) - 1):
-                current_point = sub.iloc[i]
-                next_point = sub.iloc[i + 1]
-
-                # Get current point's PM2.5 category
-                current_category = current_point.get("pm25_category", "No disponible")
-                
-                # Determine opacity based on AQI filter selection
-                if selected_aqi_categories is None or current_category in selected_aqi_categories:
-                    opacity = 200  # Full opacity for selected categories
-                else:
-                    opacity = 60   # Reduced opacity for non-selected categories
-
-                # Color
-                if "pm25_color" in sub.columns:
-                    color = current_point["pm25_color"]
-                    if isinstance(color, list) and len(color) >= 3:
-                        path_color = [color[0], color[1], color[2], opacity]
-                    else:
-                        path_color = [0, 228, 0, opacity]
-                else:
-                    path_color = [0, 228, 0, opacity]
-
-                path = {
-                    "start_lon": current_point["Lon"],
-                    "start_lat": current_point["Lat"],
-                    "start_elevation": 50,  # Add elevation to start point
-                    "end_lon": next_point["Lon"],
-                    "end_lat": next_point["Lat"],
-                    "end_elevation": 50,    # Add elevation to end point
-                    "R": path_color[0],
-                    "G": path_color[1],
-                    "B": path_color[2],
-                    "A": opacity,  # Store opacity separately for easier access
-                    "pm25_category": current_category,
-                    "co2_value": current_point.get("co2_value", 0),
-                    "pm25_value": current_point.get("pm25_value", 0),
-                    "temperature": current_point.get("temperature", 0),
-                    "timestamp": (
-                        current_point["_time"].strftime("%Y-%m-%d %H:%M:%S")
-                        if "_time" in current_point and pd.notna(current_point["_time"])
-                        else "No disponible"
-                    ),
-                    "location": current_point.get("location", "No disponible"),
-                }
-                local_paths.append(path)
-            return local_paths
-
-        if "location" in df.columns:
-            for _, sub in df.groupby("location"):
-                paths_data.extend(_build_for_subset(sub))
-        else:
-            paths_data = _build_for_subset(df)
-
-        return paths_data
     
-    
-
+     
     #------------------- Mapa principal ------------------
                 
-
-    #Show empty map if no data
-
     if df.empty:
         st.info("No hay datos disponibles para mostrar en el mapa.")
         r = pdk.Deck(
@@ -494,6 +481,9 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
     layers = []
 
     co2_data = df.dropna(subset=['CO2']).copy()
+    co2_data = co2_data[co2_data['CO2'] != -1]
+    # Sort by CO2 values (highest to lowest) and take first 10
+    co2_data = co2_data.nlargest(15, 'CO2')
     if not co2_data.empty:
         # Get min and max CO2 values for color scaling
         co2_min = co2_data['CO2'].min()
@@ -520,6 +510,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
         co2_data['co2_size'] = ((co2_data['CO2'] - co2_min) / (co2_max - co2_min) * 50 + 10) if co2_max > co2_min else 30
         co2_data['co2_value'] = co2_data['CO2'].round(1)
         co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
+        co2_data['location'] = co2_data['location'] if 'location' in co2_data.columns else 'No disponible'
 
         co2_scatter = pdk.Layer(
             'ScatterplotLayer',
@@ -541,18 +532,17 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
     view_state = pdk.ViewState(
         latitude=df['Lat'].mean(),
         longitude=df['Lon'].mean(),
-        zoom=14,
+        zoom=10,
         bearing=0,
         pitch=45
     )
 
-    # Render with LineLayer
     r = pdk.Deck(
         layers=layers, 
         map_style='road',
         initial_view_state=view_state,
         tooltip={
-            "html": "<b>CO₂:</b> {co2_value}",
+            "html": "<b>CO₂:</b> {co2_value} ppm<br/><b>Ruta:</b> {location}",
             "style": {
                 "backgroundColor": "rgba(0, 0, 0, 0.8)",
                 "color": "white",
