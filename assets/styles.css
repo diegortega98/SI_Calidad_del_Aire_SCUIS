@@ -277,7 +277,7 @@
 
 [data-testid="stHorizontalBlock"] {
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    padding: 20px 20px 20px 20px;
+    padding: 12px 12px 12px 12px;
     background-color: white;
     border-radius: 12px;
 }
@@ -285,6 +285,11 @@
 [data-testid="stSidebarContent"] {
     background: white; 
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; 
+    border-radius: 0px;
+}
+
+.st-key-main [data-testid="stHorizontalBlock"] {
+    box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px;
     border-radius: 0px;
 }
 
