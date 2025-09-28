@@ -177,45 +177,6 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
         # Add heatmap layers based on selected parameters
         if selected_parameters and isinstance(selected_parameters, dict):
             
-            # CO2 Scatter Layer
-            if selected_parameters.get('CO2', False) and 'CO2' in df.columns:
-                co2_data = df.dropna(subset=['CO2']).copy()
-                if not co2_data.empty:
-                    # Get min and max CO2 values for color scaling
-                    co2_min = co2_data['CO2'].min()
-                    co2_max = co2_data['CO2'].max()
-                    
-                    # Create color based on CO2 value using standard thresholds
-                    def get_co2_color(co2_value):
-                        # Standard CO2 thresholds (ppm)
-                        if co2_value <= 400:
-                            return [0, 255, 0, 180]    # Green - Outdoor level
-                        elif co2_value <= 600:
-                            return [128, 255, 0, 180]  # Light green - Acceptable
-                        elif co2_value <= 1000:
-                            return [255, 255, 0, 180]  # Yellow - Drowsiness may begin
-                        elif co2_value <= 5000:
-                            return [255, 165, 0, 180]  # Orange - Workplace exposure limit
-                        elif co2_value <= 10000:
-                            return [255, 69, 0, 180]   # Red orange - Drowsiness
-                        else:
-                            return [255, 0, 0, 180]    # Red - Immediately dangerous
-                    
-                    # Apply colors to data
-                    co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
-                    co2_data['co2_value'] = co2_data['CO2'].round(1)
-                    co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
-                    
-                    co2_scatter = pdk.Layer(
-                        'ScatterplotLayer',
-                        data=co2_data,
-                        get_position='[Lon, Lat]',
-                        get_color='co2_color',
-                        opacity=0.5,
-                        pickable=False
-                    )
-                    layers.append(co2_scatter)
-            
             # Temperature Heatmap Layer
             if selected_parameters.get('Temp', False) and 'Temperature' in df.columns:
                 temp_data = df.dropna(subset=['Temperature']).copy()
@@ -805,11 +766,12 @@ def main():
             st.html(f"""<div class="dailytitle"> Gráficos en base a los últimos 7 días </div>""")
             with st.container(key="graphs"):
                 with st.container(key="graph1"):
-                    st.html("""<div class="graphtitle"> Concentración promedio de PM2.5 por ruta </div>""")
+                    st.html("""<div class="graphtitle"> Concentración de PM2.5 y C02 por ruta </div>""")
 
                     df["_time"] = pd.to_datetime(df["_time"].dt.tz_localize(None))
-                    dfchart = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
-                    dfchart = dfchart.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
+                    dfchart1 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart1x = dfchart1.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
+                    dfchart1y = dfchart1.groupby('location')['CO2'].mean().sort_values(ascending=True)
 
                     # Create color list based on contamination classification using the same thresholds
                     def get_route_colors(pm25_values):
@@ -834,25 +796,31 @@ def main():
                                 colors.append(thresholds[-1][5])
                         return colors
                     
-                    route_colors = get_route_colors(dfchart.values)
+                    route_colors = get_route_colors(dfchart1x.values)
 
-                    fig = px.bar({'location': dfchart.index,
-                    'Average PM2.5': dfchart.values}, x="location", y="Average PM2.5", 
-                    color_discrete_sequence=route_colors)
+                    fig = px.bar({'Ruta': dfchart1x.index,
+                    'Promedio PM2.5': dfchart1x.values, 'Promedio CO2': dfchart1y.values,},
+                    x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
+
                     st.plotly_chart(fig, use_container_width=True, theme=None)
 
-
                 with st.container(key="graph2"):
-                    st.html("""<div class="graphtitle"> Concentración promedio de C02 por hora </div>""")
+                    st.html(
+                    """
+                    <div class="graphtitle"> Evolución por día del PM2.5 y C02 </div>
+                    """)
 
                     dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
-                    dfchart2.rename(columns={"_time": "Date-Time", "metrics_0_fields_CO2": "CO2"},
-                    inplace=True)
-
-                    dfchart2 = dfchart2.groupby('Date-Time')['CO2'].mean()
                     
-                    fig2 = px.line({'Date-Time': dfchart2.index,
-                    'Average CO2': dfchart2.values}, x="Date-Time", y="Average CO2", color_discrete_sequence=["#0fa539"])
+                    dfchart2x = dfchart2.groupby('_time')['PM2.5'].mean()
+                    dfchart2y = dfchart2.groupby('_time')['CO2'].mean()
+
+                    fig2 = px.line({'Fecha': dfchart2x.index,
+                    'Promedio PM2.5': dfchart2x.values, 'Promedio CO2': dfchart2y.values,},
+                    x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
+                    
                     st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 if __name__ == "__main__" or st._is_running_with_streamlit:

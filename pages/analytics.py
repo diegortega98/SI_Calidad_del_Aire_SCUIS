@@ -1,7 +1,9 @@
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import pydeck as pdk
+import numpy as np
 import time
 from data.connection import get_client_or_raise, run_query, flux_query, ConnectionNotReady
 from influxdb_client import InfluxDBClient
@@ -19,6 +21,549 @@ def cached_query(flux: str):
     client = get_cached_client()
     
     return run_query(client, flux)
+
+@st.fragment()
+def plot_map2(df, selected_parameters, selected_aqi_categories=None, auto_refresh=False):
+    import numpy as np
+    # Definir constantes para las columnas de datos ------------------
+
+    PM25_COLUMN = 'PM2.5'
+    CO2_COLUMN = 'CO2'
+    TEMP_COLUMN = 'Temperature'
+
+    PM25_THRESHOLDS = [
+                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                ]
+    
+    # Functions ------------------------------------------------
+    def get_pm25_color_and_category(pm25_value):
+                for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                    if low <= pm25_value <= high:
+                        # Convertir hex a RGB con transparencia
+                        r = int(color_hex[1:3], 16)
+                        g = int(color_hex[3:5], 16)
+                        b = int(color_hex[5:7], 16)
+                        return [r, g, b, 180], category
+                # Si está fuera de rango, usar el último threshold
+                r = int(PM25_THRESHOLDS[-1][5][1:3], 16)
+                g = int(PM25_THRESHOLDS[-1][5][3:5], 16)
+                b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
+                return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
+
+    def build_paths(df: pd.DataFrame, selected_aqi_categories=None) -> list[dict]:
+        
+        paths_data = []
+        if len(df) < 2:
+            return paths_data
+
+        def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
+            sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
+            local_paths = []
+            for i in range(len(sub) - 1):
+                current_point = sub.iloc[i]
+                next_point = sub.iloc[i + 1]
+
+                # Get current point's PM2.5 category
+                current_category = current_point.get("pm25_category", "No disponible")
+                
+                # Determine opacity based on AQI filter selection
+                if selected_aqi_categories is None or current_category in selected_aqi_categories:
+                    opacity = 200  # Full opacity for selected categories
+                else:
+                    opacity = 60   # Reduced opacity for non-selected categories
+
+                # Color
+                if "pm25_color" in sub.columns:
+                    color = current_point["pm25_color"]
+                    if isinstance(color, list) and len(color) >= 3:
+                        path_color = [color[0], color[1], color[2], opacity]
+                    else:
+                        path_color = [0, 228, 0, opacity]
+                else:
+                    path_color = [0, 228, 0, opacity]
+
+                path = {
+                    "start_lon": current_point["Lon"],
+                    "start_lat": current_point["Lat"],
+                    "start_elevation": 50,  # Add elevation to start point
+                    "end_lon": next_point["Lon"],
+                    "end_lat": next_point["Lat"],
+                    "end_elevation": 50,    # Add elevation to end point
+                    "R": path_color[0],
+                    "G": path_color[1],
+                    "B": path_color[2],
+                    "A": opacity,  # Store opacity separately for easier access
+                    "pm25_category": current_category,
+                    "co2_value": current_point.get("co2_value", 0),
+                    "pm25_value": current_point.get("pm25_value", 0),
+                    "temperature": current_point.get("temperature", 0),
+                    "timestamp": (
+                        current_point["_time"].strftime("%Y-%m-%d %H:%M:%S")
+                        if "_time" in current_point and pd.notna(current_point["_time"])
+                        else "No disponible"
+                    ),
+                    "location": current_point.get("location", "No disponible"),
+                }
+                local_paths.append(path)
+            return local_paths
+
+        if "location" in df.columns:
+            for _, sub in df.groupby("location"):
+                paths_data.extend(_build_for_subset(sub))
+        else:
+            paths_data = _build_for_subset(df)
+
+        return paths_data
+
+
+    #Show empty map if no data
+
+    if df.empty:
+        st.info("No hay datos disponibles para mostrar en el mapa.")
+        r = pdk.Deck(
+        layers=[], 
+        map_style='road',
+        initial_view_state=pdk.ViewState(
+        latitude=7.1333,
+        longitude=-73.1333,
+        zoom=14,
+        bearing=0,
+        pitch=45
+    )         
+        )
+        st.pydeck_chart(r, height = 400)
+        return
+
+    # Crear columna layer como la media de los valores de contaminación
+    pollution_columns = [CO2_COLUMN, PM25_COLUMN]
+    
+    # Verificar que las columnas existen y calcular la media
+    available_columns = [col for col in pollution_columns if col in df.columns]
+    
+    if available_columns:
+        # Calcular la media de las columnas de contaminación disponibles
+        df = df.copy()
+        df['layer'] = df[available_columns].mean(axis=1, skipna=True)            
+            
+        # Aplicar colores y categorías
+        df[['pm25_color', 'pm25_category']] = df[PM25_COLUMN].apply(
+            lambda x: pd.Series(get_pm25_color_and_category(x))
+        )
+        
+        # Crear columnas para el tooltip
+        df['co2_value'] = df.get(CO2_COLUMN, 0).round(1)
+        df['pm25_value'] = df[PM25_COLUMN].round(1)
+        df['temperature'] = df.get(TEMP_COLUMN, 0).round(1)
+        
+    # Create paths data if there are 2 or more records
+    
+
+    
+    
+    # Initialize layers list
+    layers = []
+    
+    # Add heatmap layers based on selected parameters
+    if selected_parameters and isinstance(selected_parameters, dict):
+        
+        # Temperature Heatmap Layer
+        if selected_parameters.get('Temp', False) and 'Temperature' in df.columns:
+            temp_data = df.dropna(subset=['Temperature']).copy()
+            if not temp_data.empty:
+                # Normalize temperature values for better visualization (0-1 range)
+                temp_min = temp_data['Temperature'].min()
+                temp_max = temp_data['Temperature'].max()
+                if temp_max > temp_min:
+                    temp_data['weight'] = (temp_data['Temperature'] - temp_min) / (temp_max - temp_min)
+                else:
+                    temp_data['weight'] = 0.5
+                
+                temp_heatmap = pdk.Layer(
+                    'HeatmapLayer',
+                    data=temp_data,
+                    get_position='[Lon, Lat]',
+                    get_weight='weight',
+                    radius_pixels=60,
+                    opacity=0.6,
+                    color_range=[
+                        [0, 0, 255],      # Blue (cold)
+                        [0, 255, 255],    # Cyan 
+                        [0, 255, 0],      # Green
+                        [255, 255, 0],    # Yellow
+                        [255, 165, 0],    # Orange
+                        [255, 0, 0]       # Red (hot)
+                    ],
+                    pickable=False
+                )
+                layers.append(temp_heatmap)
+    
+    # Add PM2.5 paths layer only if PM2.5 is selected
+    if PM25_COLUMN in selected_parameters:
+        # Convert to DataFrame and add LineLayer for PM2.5 paths
+        
+        paths_df = build_paths(df, selected_aqi_categories)
+        # Define a LineLayer to display paths on the map
+        line_layer = pdk.Layer(
+            'ScatterplotLayer',
+            data=paths_df,
+            get_position='[Lon, Lat]',
+            get_width=5,
+            highlight_color=[0, 0, 255],
+            picking_radius=1,
+            auto_highlight=True,
+            pickable=True,
+        )
+        
+        layers.append(line_layer)
+    
+    if CO2_COLUMN in selected_parameters:
+        co2_data = df.dropna(subset=['CO2']).copy()
+        if not co2_data.empty:
+            # Get min and max CO2 values for color scaling
+            co2_min = co2_data['CO2'].min()
+            co2_max = co2_data['CO2'].max()
+            
+            # Create color based on CO2 value using standard thresholds
+            def get_co2_color(co2_value):
+                # Standard CO2 thresholds (ppm)
+                if co2_value <= 400:
+                    return [0, 255, 0, 180]    # Green - Outdoor level
+                elif co2_value <= 600:
+                    return [128, 255, 0, 180]  # Light green - Acceptable
+                elif co2_value <= 1000:
+                    return [255, 255, 0, 180]  # Yellow - Drowsiness may begin
+                elif co2_value <= 5000:
+                    return [255, 165, 0, 180]  # Orange - Workplace exposure limit
+                elif co2_value <= 10000:
+                    return [255, 69, 0, 180]   # Red orange - Drowsiness
+                else:
+                    return [255, 0, 0, 180]    # Red - Immediately dangerous
+            
+            # Apply colors to data
+            co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
+            co2_data['co2_size'] = ((co2_data['CO2'] - co2_min) / (co2_max - co2_min) * 50 + 10) if co2_max > co2_min else 30
+            co2_data['co2_value'] = co2_data['CO2'].round(1)
+            co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
+
+            co2_scatter = pdk.Layer(
+                'ScatterplotLayer',
+                data=co2_data,
+                get_position='[Lon, Lat]',
+                get_color='co2_color',
+                get_radius='co2_size',
+                radius_scale=1,
+                radius_min_pixels=5,
+                radius_max_pixels=60,
+                pickable=False,
+                auto_highlight=False,
+                opacity=0.8
+            )
+
+            layers.append(co2_scatter)
+
+    if TEMP_COLUMN in selected_parameters:
+        temp_data = df.dropna(subset=['Temperature']).copy()
+        if not temp_data.empty:
+            # Get min and max temperature values for color scaling
+            temp_min = temp_data['Temperature'].min()
+            temp_max = temp_data['Temperature'].max()
+            
+            # Create color based on temperature value using standard thresholds
+            def get_temp_color(temp_value):
+                # Standard temperature thresholds (°C)
+                if temp_value <= 10:
+                    return [0, 0, 255, 180]     # Blue - Very cold
+                elif temp_value <= 15:
+                    return [0, 128, 255, 180]   # Light blue - Cold
+                elif temp_value <= 20:
+                    return [0, 255, 255, 180]   # Cyan - Cool
+                elif temp_value <= 25:
+                    return [0, 255, 0, 180]     # Green - Comfortable
+                elif temp_value <= 30:
+                    return [255, 255, 0, 180]   # Yellow - Warm
+                elif temp_value <= 35:
+                    return [255, 165, 0, 180]   # Orange - Hot
+                else:
+                    return [255, 0, 0, 180]     # Red - Very hot
+            
+            # Apply colors and size to data
+            temp_data['temp_color'] = temp_data['Temperature'].apply(get_temp_color)
+            temp_data['temp_size'] = ((temp_data['Temperature'] - temp_min) / (temp_max - temp_min) * 40 + 15) if temp_max > temp_min else 25
+            temp_data['temp_value'] = temp_data['Temperature'].round(1)
+            temp_data['timestamp'] = temp_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in temp_data.columns else 'No disponible'
+
+            # Use ColumnLayer for temperature (rectangular columns)
+            temp_columns = pdk.Layer(
+                'ColumnLayer',
+                data=temp_data,
+                get_position='[Lon, Lat]',
+                get_fill_color='temp_color',
+                get_elevation='temp_size',
+                elevation_scale=2,
+                radius=15,
+                pickable=False,
+                auto_highlight=False,
+                opacity=0.7
+            )
+
+            layers.append(temp_columns)
+
+    # Check if any layers exist
+    
+
+    # Set the viewport location
+    view_state = pdk.ViewState(
+        latitude=df['Lat'].mean(),
+        longitude=df['Lon'].mean(),
+        zoom=14,
+        bearing=0,
+        pitch=45
+    )
+
+    # Render with LineLayer
+    r = pdk.Deck(
+        layers=layers, 
+        map_style='road',
+        initial_view_state=view_state,
+        tooltip={
+            "html": "<b>PM2.5:</b> {pm25_value} μg/m³<b>Calidad:</b> {pm25_category}<br/><b>Temp:</b> {temperature} °C<br/><b>Tiempo:</b> {timestamp}<br/><b>Ubicación:</b> {location}",
+            "style": {
+                "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                "color": "white",
+                "borderRadius": "5px",
+                "padding": "10px",
+                "fontSize": "12px"
+            }
+        }
+    )
+    
+    # Mostrar en Streamlit
+    st.pydeck_chart(r, height = 450)
+
+@st.fragment()
+def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh=False):
+    # Definir constantes para las columnas de datos ------------------
+
+    PM25_COLUMN = 'PM2.5'
+    CO2_COLUMN = 'CO2'
+    TEMP_COLUMN = 'Temperature'
+
+    PM25_THRESHOLDS = [
+                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                ]
+    
+    # Functions ------------------------------------------------
+    def get_pm25_color_and_category(pm25_value):
+                for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                    if low <= pm25_value <= high:
+                        # Convertir hex a RGB con transparencia
+                        r = int(color_hex[1:3], 16)
+                        g = int(color_hex[3:5], 16)
+                        b = int(color_hex[5:7], 16)
+                        return [r, g, b, 180], category
+                # Si está fuera de rango, usar el último threshold
+                r = int(PM25_THRESHOLDS[-1][5][1:3], 16)
+                g = int(PM25_THRESHOLDS[-1][5][3:5], 16)
+                b = int(PM25_THRESHOLDS[-1][5][5:7], 16)
+                return [r, g, b, 180], PM25_THRESHOLDS[-1][4]
+
+    def build_paths(df: pd.DataFrame, selected_aqi_categories=None) -> list[dict]:
+        
+        paths_data = []
+        if len(df) < 2:
+            return paths_data
+
+        def _build_for_subset(sub: pd.DataFrame) -> list[dict]:
+            sub = sub.sort_values("_time") if "_time" in sub.columns else sub.copy()
+            local_paths = []
+            for i in range(len(sub) - 1):
+                current_point = sub.iloc[i]
+                next_point = sub.iloc[i + 1]
+
+                # Get current point's PM2.5 category
+                current_category = current_point.get("pm25_category", "No disponible")
+                
+                # Determine opacity based on AQI filter selection
+                if selected_aqi_categories is None or current_category in selected_aqi_categories:
+                    opacity = 200  # Full opacity for selected categories
+                else:
+                    opacity = 60   # Reduced opacity for non-selected categories
+
+                # Color
+                if "pm25_color" in sub.columns:
+                    color = current_point["pm25_color"]
+                    if isinstance(color, list) and len(color) >= 3:
+                        path_color = [color[0], color[1], color[2], opacity]
+                    else:
+                        path_color = [0, 228, 0, opacity]
+                else:
+                    path_color = [0, 228, 0, opacity]
+
+                path = {
+                    "start_lon": current_point["Lon"],
+                    "start_lat": current_point["Lat"],
+                    "start_elevation": 50,  # Add elevation to start point
+                    "end_lon": next_point["Lon"],
+                    "end_lat": next_point["Lat"],
+                    "end_elevation": 50,    # Add elevation to end point
+                    "R": path_color[0],
+                    "G": path_color[1],
+                    "B": path_color[2],
+                    "A": opacity,  # Store opacity separately for easier access
+                    "pm25_category": current_category,
+                    "co2_value": current_point.get("co2_value", 0),
+                    "pm25_value": current_point.get("pm25_value", 0),
+                    "temperature": current_point.get("temperature", 0),
+                    "timestamp": (
+                        current_point["_time"].strftime("%Y-%m-%d %H:%M:%S")
+                        if "_time" in current_point and pd.notna(current_point["_time"])
+                        else "No disponible"
+                    ),
+                    "location": current_point.get("location", "No disponible"),
+                }
+                local_paths.append(path)
+            return local_paths
+
+        if "location" in df.columns:
+            for _, sub in df.groupby("location"):
+                paths_data.extend(_build_for_subset(sub))
+        else:
+            paths_data = _build_for_subset(df)
+
+        return paths_data
+    
+    
+
+    #------------------- Mapa principal ------------------
+                
+
+    #Show empty map if no data
+
+    if df.empty:
+        st.info("No hay datos disponibles para mostrar en el mapa.")
+        r = pdk.Deck(
+        layers=[], 
+        map_style='road',
+        initial_view_state=pdk.ViewState(
+        latitude=7.1333,
+        longitude=-73.1333,
+        zoom=14,
+        bearing=0,
+        pitch=45
+    )         
+        )
+        st.pydeck_chart(r, height = 400)
+        return
+
+    # Crear columna layer como la media de los valores de contaminación
+    pollution_columns = [CO2_COLUMN, PM25_COLUMN]
+    
+    # Verificar que las columnas existen y calcular la media
+    available_columns = [col for col in pollution_columns if col in df.columns]
+    
+    if available_columns:
+        # Calcular la media de las columnas de contaminación disponibles
+        df = df.copy()
+        df['layer'] = df[available_columns].mean(axis=1, skipna=True)            
+            
+        # Aplicar colores y categorías
+        df[['pm25_color', 'pm25_category']] = df[PM25_COLUMN].apply(
+            lambda x: pd.Series(get_pm25_color_and_category(x))
+        )
+        
+        # Crear columnas para el tooltip
+        df['co2_value'] = df.get(CO2_COLUMN, 0).round(1)
+        df['pm25_value'] = df[PM25_COLUMN].round(1)
+        df['temperature'] = df.get(TEMP_COLUMN, 0).round(1)
+        
+    # Create paths data if there are 2 or more records
+    
+    
+    # Initialize layers list
+    layers = []
+
+    co2_data = df.dropna(subset=['CO2']).copy()
+    if not co2_data.empty:
+        # Get min and max CO2 values for color scaling
+        co2_min = co2_data['CO2'].min()
+        co2_max = co2_data['CO2'].max()
+        
+        # Create color based on CO2 value using standard thresholds
+        def get_co2_color(co2_value):
+            # Standard CO2 thresholds (ppm)
+            if co2_value <= 400:
+                return [0, 255, 0, 180]    # Green - Outdoor level
+            elif co2_value <= 600:
+                return [128, 255, 0, 180]  # Light green - Acceptable
+            elif co2_value <= 1000:
+                return [255, 255, 0, 180]  # Yellow - Drowsiness may begin
+            elif co2_value <= 5000:
+                return [255, 165, 0, 180]  # Orange - Workplace exposure limit
+            elif co2_value <= 10000:
+                return [255, 69, 0, 180]   # Red orange - Drowsiness
+            else:
+                return [255, 0, 0, 180]    # Red - Immediately dangerous
+        
+        # Apply colors to data
+        co2_data['co2_color'] = co2_data['CO2'].apply(get_co2_color)
+        co2_data['co2_size'] = ((co2_data['CO2'] - co2_min) / (co2_max - co2_min) * 50 + 10) if co2_max > co2_min else 30
+        co2_data['co2_value'] = co2_data['CO2'].round(1)
+        co2_data['timestamp'] = co2_data['_time'].dt.strftime('%Y-%m-%d %H:%M:%S') if '_time' in co2_data.columns else 'No disponible'
+
+        co2_scatter = pdk.Layer(
+            'ScatterplotLayer',
+            data=co2_data,
+            get_position='[Lon, Lat]',
+            get_color='co2_color',
+            get_radius='co2_size',
+            radius_scale=1,
+            radius_min_pixels=5,
+            radius_max_pixels=60,
+            pickable=True,
+            auto_highlight=False,
+            opacity=0.8
+        )
+
+        layers.append(co2_scatter)
+
+    # Set the viewport location
+    view_state = pdk.ViewState(
+        latitude=df['Lat'].mean(),
+        longitude=df['Lon'].mean(),
+        zoom=14,
+        bearing=0,
+        pitch=45
+    )
+
+    # Render with LineLayer
+    r = pdk.Deck(
+        layers=layers, 
+        map_style='road',
+        initial_view_state=view_state,
+        tooltip={
+            "html": "<b>CO₂:</b> {co2_value}",
+            "style": {
+                "backgroundColor": "rgba(0, 0, 0, 0.8)",
+                "color": "white",
+                "borderRadius": "5px",
+                "padding": "10px",
+                "fontSize": "12px"
+            }
+        }
+    )
+        
+    # Mostrar en Streamlit
+    st.pydeck_chart(r, height=450)
 
 def main():
 
@@ -62,7 +607,7 @@ def main():
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
 
-    if 'df' in locals() and not df.empty:
+
         # Convert routes to integers for better handling
 
         st.write("Total de registros analizados: " + str(len(df)))
@@ -145,6 +690,13 @@ def main():
                 
         except Exception as e:
             st.warning(f"No se pudieron calcular los indicadores clave: {e}")
+
+        # Define available parameters (used across columns)
+        available_parameters = ["CO2"]
+            
+        # Apply filters to dataframe
+        filtered_df = df.copy()
+        
         
         with st.container(key="main"):
             with st.container(key="pie"):
@@ -161,14 +713,19 @@ def main():
                     fig_pie = px.pie(
                         values=category_counts.values,
                         names=category_counts.index,
-                        title=""
-                    )
+                        title="",
+                        color=category_counts.index,
+                        color_discrete_map={'Buena':'#00e400',
+                                 "Moderada":"#ffff00",
+                                 "Dañina para sensibles":"#ff7e00",
+                                 'Dañina':'#ff0000',
+                                 "Muy dañina":"#8f3f97",
+                                 "Peligrosa":"#7e0023"})
                     
                     # Update layout for better appearance in column
                     fig_pie.update_traces(textposition='inside', textinfo='percent+label')
                     fig_pie.update_layout(
                         showlegend=True,
-                        height=400,
                         margin=dict(t=20, b=20, l=20, r=20)
                     )
                     
@@ -258,58 +815,73 @@ def main():
                 except Exception as e:
                     st.warning(f"No se pudieron calcular las estadísticas diarias: {e}")
 
-    with st.container(key="graphsy"):
-        with st.container(key="graph1"):
-            
-            st.html(
-            """
-            <div class="graphtitle"> Coordenadas con concentraciones más altas de PM2.5 </div>
-            """)
+        with st.container(key="graphsy"):
+            with st.container(key="graph1"):
+                st.html(
+                """
+                <div class="graphtitle"> Coordenadas con calidad de aire más baja </div>
+                """)
+                
+                # Parameters filter - Multiselect
+                default_selected = ["PM2.5"]
 
-            dfchart3 = df.groupby('location')['PM2.5'].mean()
+                # AQI Category Filter
+                aqi_categories = ["Buena", "Moderada", "Dañina para sensibles", "Dañina", "Muy dañina", "Peligrosa"]
+                    
+                # Apply filters to dataframe
+                dfchart4 = df.nlargest(15, 'PM2.5', keep='first')
+                
+                # Show filtered results
+                if not dfchart4.empty:
+                    plot_map2(dfchart4, default_selected, aqi_categories, auto_refresh=False)
+                else:
+                    plot_map2(pd.DataFrame(), [], [], auto_refresh=False)
 
-            fig3 = px.bar({'Ubicación': dfchart3.index,
-            'Promedio PM2.5': dfchart3.values}, x="Ubicación",y="Promedio PM2.5")
-            st.plotly_chart(fig3, use_container_width=True, theme=None, key="fig3")
+            with st.container(key="graph2"):
 
-        with st.container(key="graph2"):
-            st.html(
-            """
-            <div class="graphtitle"> Evolucion de la PM2.5 contaminacion </div>
-            """)
+                st.html(
+                """
+                <div class="graphtitle"> Concentración de C02 en el mapa </div>
+                """)
+                # Show filtered results
+                if not filtered_df.empty:
+                    plot_map(filtered_df, available_parameters, auto_refresh=False)
+                else:
+                    plot_map(pd.DataFrame(), [], [], auto_refresh=False)
 
-            dfchart4 = df.groupby('_time')['CO2'].mean()
-            
-            fig4 = px.line({'Tiempo': dfchart4.index,
-            'Promedio CO2': dfchart4.values}, x="Tiempo",y="Promedio CO2")
-            st.plotly_chart(fig4, use_container_width=True, theme=None, key="fig4")
+        with st.container(key="graphsx"):
+            with st.container(key="graphx1"):
+                
+                st.html(
+                """
+                <div class="graphtitle"> Concentración de PM2.5 y C02 por ruta </div>
+                """)
 
-    with st.container(key="graphsx"):
-        with st.container(key="graphx1"):
-            
-            st.html(
-            """
-            <div class="graphtitle"> Rutas con concentraciones más altas </div>
-            """)
+                dfchart5 = df.groupby('location')['PM2.5'].mean()
+                dfchart5x = df.groupby('location')['CO2'].mean()
 
-           
-            dfchart5 = df.groupby('location')['PM2.5'].mean()
+                fig5 = px.bar({'Ruta': dfchart5.index,
+                'Promedio PM2.5': dfchart5.values, 'Promedio CO2': dfchart5x.values,},
+                x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
 
-            fig5 = px.bar({'Ubicación': dfchart5.index,
-            'Promedio PM2.5': dfchart5.values}, x="Ubicación",y="Promedio PM2.5")
-            st.plotly_chart(fig5, use_container_width=True, theme=None, key="fig5")
+                st.plotly_chart(fig5, use_container_width=True, theme=None, key="fig5")
 
-        with st.container(key="graphx2"):
-            st.html(
-            """
-            <div class="graphtitle"> Contaminación por día </div>
-            """)
-            
-            dfchart6 = df.groupby('_time')['CO2'].mean()
-            
-            fig6 = px.line({'Tiempo': dfchart6.index,
-            'Promedio CO2': dfchart6.values}, x="Tiempo",y="Promedio CO2")
-            st.plotly_chart(fig6, use_container_width=True, theme=None, key="fig6")
+            with st.container(key="graphx2"):
+                st.html(
+                """
+                <div class="graphtitle"> Evolución por día del PM2.5 y C02 </div>
+                """)
+                
+                dfchart6 = df.groupby('_time')['PM2.5'].mean()
+                dfchart6x = df.groupby('_time')['CO2'].mean()
+
+                fig6 = px.line({'Fecha': dfchart6.index,
+                'Promedio PM2.5': dfchart6.values, 'Promedio CO2': dfchart6x.values,},
+                x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
+                    color_discrete_sequence=["#0FA539","#00707c"])
+
+                st.plotly_chart(fig6, use_container_width=True, theme=None, key="fig6")
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 
