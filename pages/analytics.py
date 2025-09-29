@@ -78,6 +78,7 @@ def plot_map2(df):
     
     # Add PM2.5 scatter plot (main purpose of this function)
     pm25_data = df.dropna(subset=['PM2.5']).copy()
+    pm25_data = pm25_data[pm25_data['PM2.5'] != -1]
     if not pm25_data.empty:
             # Get min and max PM2.5 values for size scaling
             pm25_min = pm25_data['PM2.5'].min()
@@ -321,6 +322,14 @@ def main():
             except:
                 st.info("No fue posible obtener la última conexión de datos.")   
 
+        # Filter out invalid -1 values in CO2 and PM2.5 data
+        original_count = len(df)
+        df = df[
+            (df.get('CO2', 0) != -1) & 
+            (df.get('PM2.5', 0) != -1)
+        ].copy()
+        filtered_count = len(df)
+        
 
         # Convert routes to integers for better handling
 
