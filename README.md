@@ -1,7 +1,6 @@
 # Sistema de información basado en IoT para el análisis de la calidad del aire en rutas del transporte público del Área Metropolitana de Bucaramanga
 ---
 
-
 ## Cómo Ejecutar el Proyecto
 
 ### Requisitos Previos
@@ -62,12 +61,11 @@ streamlit run main_app.py
 | **Temperature** | Temperatura ambiente | °C | 15-40 |
 | **GPS** | Coordenadas de ubicación | Lat, Lon | Bucaramanga, Colombia |
 
-### 🕐 Zona Horaria
-Todos los timestamps están en **zona horaria colombiana (UTC-5)**
 
 
-## 🌟 Desarrollado por
-**Universidad Industrial de Santander - SmartCampus UIS**
+## Desarrollado por
 Diego Andrés Ortega Gelvez -2170079
 Jose Fredy Navarro Motta - 2190044
+**Universidad Industrial de Santander - SmartCampus UIS**
+
 
