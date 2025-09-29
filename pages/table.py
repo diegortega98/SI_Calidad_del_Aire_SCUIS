@@ -262,6 +262,7 @@ def main():
             height=600,
             on_select="rerun",
         )
+        
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
     main()

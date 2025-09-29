@@ -239,11 +239,6 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             df['pm25_value'] = df[PM25_COLUMN].round(1)
             df['temperature'] = df.get(TEMP_COLUMN, 0).round(1)
             
-        # Create paths data if there are 2 or more records
-        
-
-        
-        
         # Initialize layers list
         layers = []
         

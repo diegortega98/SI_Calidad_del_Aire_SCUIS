@@ -28,8 +28,6 @@ def plot_map2(df):
     import numpy as np
     # Definir constantes para las columnas de datos ------------------
 
-
-
     PM25_THRESHOLDS = [
                     (0.0, 12.0, 0, 50, "Buena", "#00e400"),
                     (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
