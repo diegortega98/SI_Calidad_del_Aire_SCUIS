@@ -161,11 +161,6 @@ def plot_map2(df, selected_parameters, selected_aqi_categories=None, auto_refres
         df['pm25_value'] = df[PM25_COLUMN].round(1)
         df['temperature'] = df.get(TEMP_COLUMN, 0).round(1)
         
-    # Create paths data if there are 2 or more records
-    
-
-    
-    
     # Initialize layers list
     layers = []
     
@@ -644,7 +639,7 @@ def main():
             
             with st.container(key="info"):
                 with st.container(key="col1"):
-                    st.html("""<div class="graphtitle"> Hora Más Peligrosa </div>""")
+                    st.html("""<div class="graphtitle"> Hora con mayor concentración PM2.5 </div>""")
                     st.metric(
                         label="Hora Más Peligrosa",
                         label_visibility="collapsed",
@@ -653,7 +648,7 @@ def main():
                     )
                 
                 with st.container(key="col2"):
-                    st.html("""<div class="graphtitle"> Ruta Más Contaminada </div>""")
+                    st.html("""<div class="graphtitle"> Ruta con mayor concentración PM2.5 </div>""")
                     st.metric(
                         label="Ruta Más Contaminada",
                         label_visibility="collapsed",
@@ -662,7 +657,7 @@ def main():
                     )
                 
                 with st.container(key="col3"):
-                    st.html("""<div class="graphtitle"> Ruta Menos Contaminada </div>""")
+                    st.html("""<div class="graphtitle"> Ruta con menor concentración PM2.5 </div>""")
                     st.metric(
                         label="Ruta Menos Contaminada",
                         label_visibility="collapsed", 
@@ -671,7 +666,7 @@ def main():
                     )
                 
                 with st.container(key="col4"):
-                    st.html("""<div class="graphtitle"> Categoría Más Común </div>""")
+                    st.html("""<div class="graphtitle"> Categoría más común de PM2.5 </div>""")
                     st.metric(
                         label="Categoría Más Común",
                         label_visibility="collapsed",
@@ -694,7 +689,7 @@ def main():
                 try:
                     st.html(
                     """
-                    <div class="graphtitle"> Distribución de Categorías de AQI </div>
+                    <div class="graphtitle"> Distribución de clasificaciones de AQI basádas en PM2.5 </div>
                     """)
                     
                     # Calculate category distribution
@@ -729,7 +724,7 @@ def main():
                 try:
                     st.html(
                     """
-                    <div class="graphtitle"> Estadísticas Diarias </div>
+                    <div class="graphtitle"> Estadísticas diarias </div>
                     """)
                     
                     # Calculate daily statistics

@@ -486,12 +486,12 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 # Legend selector
                 legend_option = st.selectbox(
                     "Seleccionar leyenda:",
-                    options=["PM2.5 (Calidad del Aire)", "CO2 (ppm)", "Temperatura (°C)"],
+                    options=["PM2.5 (µg/m³)", "CO2 (ppm)", "Temperatura (°C)"],
                     index=0,
                     key="legend_selector"
                 )
                 
-                if legend_option == "PM2.5 (Calidad del Aire)":
+                if legend_option == "PM2.5 (µg/m³)":
                     #leyenda PM2.5
                     st.html(
                     """<div class="mydiv">
@@ -731,7 +731,7 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
 
 def main():
     st.html("""
-    <h1 style="margin: 0; font-size: 36px; text-align: center;">Mapa de rutas de contaminación</h1>
+    <h1 style="margin: 0; font-size: 36px; text-align: center;">Dashboard de contaminación en rutas del AMB</h1>
     """)
 
     # Establish connection
@@ -785,7 +785,7 @@ def main():
                 max_date = df['_time'].max().date()
                 
                 date_range = st.date_input(
-                    "Seleccionar el rango de fechas:",
+                    "Rango de fechas:",
                     value=(min_date, max_date),
                     min_value=min_date,
                     max_value=max_date,
@@ -807,13 +807,12 @@ def main():
                     selected_hours = [min_hour]
                 else:
                     hour_range = st.slider(
-                        "Seleccionar rango de horas:",
+                        "Rango de horas:",
                         min_value=min_hour,
                         max_value=max_hour,
                         value=(min_hour, max_hour),
                         step=1,
                         key="hour_filter",
-                        help="Selecciona el rango de horas del día (formato 24h)",
                         format="%d:00"
                     )
                     
@@ -824,7 +823,7 @@ def main():
             if 'location' in df.columns:
                 unique_routes = df['location'].dropna().unique().tolist()
                 selected_routes = st.multiselect(
-                    "Seleccionar las rutas:",
+                    "Rutas a mostrar:",
                     options=sorted(unique_routes),
                     default=sorted(unique_routes),
                     key="route_filter"
@@ -836,18 +835,17 @@ def main():
             default_selected = ["PM2.5"]
 
             selected_params = st.multiselect(
-                "Parámetros a Mostrar:",
+                "Parámetros a mostrar:",
                 options=available_parameters,
                 default=default_selected,
-                key="parameters_filter",
-                help="Selecciona los parámetros que deseas visualizar en el mapa"
+                key="parameters_filter"
             )
             
             # AQI Category Filter
             aqi_categories = ["Buena", "Moderada", "Dañina para sensibles", "Dañina", "Muy dañina", "Peligrosa"]
             
             selected_aqi_categories = st.pills(
-                "Categorías de Calidad del Aire:",
+                "Categorías de AQI basádas en PM2.5:",
                 aqi_categories,
                 default=aqi_categories,
                 key="aqi_filter",
@@ -890,7 +888,7 @@ def main():
             st.html(f"""<div class="dailytitle"> Gráficos en base a los últimos 7 días </div>""")
             with st.container(key="graphs"):
                 with st.container(key="graph1"):
-                    st.html("""<div class="graphtitle"> Concentración de PM2.5 y C02 por ruta </div>""")
+                    st.html("""<div class="graphtitle"> Concentración de PM2.5 y CO2 por ruta </div>""")
 
                     df["_time"] = pd.to_datetime(df["_time"].dt.tz_localize(None))
                     dfchart1 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
@@ -932,7 +930,7 @@ def main():
                 with st.container(key="graph2"):
                     st.html(
                     """
-                    <div class="graphtitle"> Evolución por día del PM2.5 y C02 </div>
+                    <div class="graphtitle"> Evolución por día del PM2.5 y CO2 </div>
                     """)
 
                     dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]

@@ -1,7 +1,7 @@
 import streamlit as st
 import pathlib
 
-st.set_page_config(page_title="Calidad del Aire de Transporte Público del AMB", page_icon=":material/edit:", layout="wide")
+st.set_page_config(page_title="Dashboard CC del Tranporte Público del AMB", page_icon=":material/analytics:", layout="wide")
 
 def load_css(file_path):
     with open(file_path) as f:
@@ -12,7 +12,7 @@ load_css(css_path)
 
 # Add logo to sidebar
 
-dashboard_page = st.Page("pages/map.py", title="Dashboard", icon=":material/map:")
+dashboard_page = st.Page("pages/map.py", title="Dashboard Principal", icon=":material/map:")
 analytics_page = st.Page("pages/analytics.py", title="Análisis Estadístico", icon=":material/analytics:")
 data_table_page = st.Page("pages/table.py", title="Tabla de Datos", icon=":material/table_view:")
 

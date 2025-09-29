@@ -203,6 +203,10 @@
     color: var(--bodyTextColorWhite);
 }
 
+[data-testid="stBaseButton-pillsActive"] > [data-testid="stMarkdownContainer"]{
+    font-size: 1rem;
+}
+
 [data-testid="stSidebarUserContent"]{
     padding: 24 0 0 0;
 }
