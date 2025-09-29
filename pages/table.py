@@ -125,7 +125,7 @@ def main():
     st.html("""
 
     <div class="hero-section">
-        <h1 style="margin: 0; font-size: 36px; text-align: center;">Tabla de Datos</h1>
+        <h1 style="margin: 0; font-size: 36px; text-align: center;">Tabla de datos</h1>
     </h2>
     </div>
     """)
@@ -160,13 +160,13 @@ def main():
             except:
                 st.info("No fue posible obtener la última conexión de datos.")
             
-            st.sidebar.markdown("### Filtros")
+            st.sidebar.markdown("### Filtros de la tabla")
             
             # Route filter
             if 'location' in df.columns:
                 available_routes = sorted(df['location'].dropna().unique())
                 selected_routes = st.sidebar.multiselect(
-                    "Seleccionar Rutas:",
+                    "Rutas seleccionadas:",
                     options=available_routes,
                     default=available_routes,
                     key="route_filter"
@@ -186,7 +186,7 @@ def main():
                     
                     # Date range selector
                     selected_date_range = st.sidebar.date_input(
-                        "Seleccionar Rango de Fechas:",
+                        "Rango de fechas:",
                         value=(min_date, max_date),
                         min_value=min_date,
                         max_value=max_date,
