@@ -845,7 +845,7 @@ def main():
             aqi_categories = ["Buena", "Moderada", "Dañina para sensibles", "Dañina", "Muy dañina", "Peligrosa"]
             
             selected_aqi_categories = st.pills(
-                "Categorías de AQI basádas en PM2.5:",
+                "Categorías de AQI basadas en PM2.5:",
                 aqi_categories,
                 default=aqi_categories,
                 key="aqi_filter",

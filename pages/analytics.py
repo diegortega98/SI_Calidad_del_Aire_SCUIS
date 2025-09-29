@@ -689,7 +689,7 @@ def main():
                 try:
                     st.html(
                     """
-                    <div class="graphtitle"> Distribución de clasificaciones de AQI basádas en PM2.5 </div>
+                    <div class="graphtitle"> Distribución de clasificaciones de AQI basadas en PM2.5 </div>
                     """)
                     
                     # Calculate category distribution
