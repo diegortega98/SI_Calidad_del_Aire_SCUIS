@@ -1,34 +1,31 @@
-# 🌍 Sistema de Información de Calidad del Aire
-**Smart Campus UIS**
-
+# Sistema de información basado en IoT para el análisis de la calidad del aire en rutas del transporte público del Área Metropolitana de Bucaramanga
 ---
 
-## 🚀 Cómo Ejecutar el Proyecto
 
-### 📋 Requisitos Previos
+## Cómo Ejecutar el Proyecto
+
+### Requisitos Previos
 
 - **Python 3.8+** instalado en el sistema
 - **InfluxDB 2.x** ejecutándose en `localhost:8086`
 - **Token de autenticación** válido para InfluxDB
 - Navegador web moderno
+- Desplegar SmartCampus UIS https://github.com/UIS-IoT-Smart-Campus/smart_campus_core_images
 
-### 📦 Instalación de Dependencias
+### Instalación de Dependencias
 
 1. Abrir terminal en la carpeta del proyecto
 2. Instalar las dependencias listadas en `pkgs.txt`:
 
-```bash
-pip install streamlit pandas plotly pydeck influxdb-client python-dotenv
-```
 
-### ⚙️ Configuración
+### Configuración
 
 1. ✅ Verificar que **InfluxDB** esté ejecutándose en `localhost:8086`
 2. ✅ Asegurar que el **token de autenticación** sea válido
 3. ✅ Verificar que la organización `"smart-campus"` exista
 4. ✅ Verificar que el bucket `"messages"` contenga datos
 
-### 🎯 Ejecución
+### Ejecución
 
 1. Abrir terminal en la carpeta del proyecto
 2. Ejecutar el comando principal:
@@ -42,29 +39,19 @@ streamlit run main_app.py
 
 ---
 
-## 📊 Estructura de la Aplicación
+## Estructura de la Aplicación
 
 | Módulo | Descripción |
 |--------|-------------|
-| **🗺️ Dashboard Principal** | Monitoreo en tiempo real con mapas 3D interactivos |
-| **📈 Análisis Estadístico** | Gráficos y métricas de calidad del aire |
-| **📋 Visualización de Datos** | Tablas interactivas con filtros avanzados |
-| **📤 Carga de Datos** | Interfaz para cargar nuevos datasets |
+| **Dashboard Principal** | Monitoreo en tiempo real con mapas 3D interactivos |
+| **Análisis Estadístico** | Gráficos y métricas de calidad del aire |
+| **Visualización de Datos** | Tablas interactivas con filtros avanzados |
 
 ---
 
-## 🔧 Solución de Problemas
 
-| Problema | Solución |
-|----------|----------|
-| ❌ Error de conexión a InfluxDB | Verificar que esté ejecutándose en puerto 8086 |
-| ❌ No hay datos en el mapa | Verificar que el bucket `"messages"` contenga información |
-| ❌ La página no carga | Verificar que no haya otro proceso usando el puerto 8501 |
-| ❌ Aplicación no responde | Usar `Ctrl+C` en la terminal para detener |
 
----
-
-## 📡 Datos de Calidad del Aire
+## Datos de Calidad del Aire
 
 ### Sensores Monitoreados
 
@@ -78,19 +65,9 @@ streamlit run main_app.py
 ### 🕐 Zona Horaria
 Todos los timestamps están en **zona horaria colombiana (UTC-5)**
 
----
-
-## 🎨 Características Técnicas
-
-- ✅ **Mapas 3D interactivos** con PyDeck
-- ✅ **Tiempo real** con auto-refresh cada 5 segundos
-- ✅ **Filtros avanzados** por fecha, hora, ruta y calidad del aire
-- ✅ **Visualizaciones EPA** con categorías estándar de contaminación
-- ✅ **Tooltips informativos** con datos completos de sensores
-- ✅ **Rutas de contaminación** conectando puntos temporalmente
-- ✅ **Análisis estadístico** con gráficos interactivos
-
----
 
 ## 🌟 Desarrollado por
-**Universidad Industrial de Santander - Smart Campus Initiative**
+**Universidad Industrial de Santander - SmartCampus UIS**
+Diego Andrés Ortega Gelvez -2170079
+Jose Fredy Navarro Motta - 2190044
+
