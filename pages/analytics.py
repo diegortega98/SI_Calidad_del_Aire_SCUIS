@@ -827,7 +827,7 @@ def main():
 
                 st.html(
                 """
-                <div class="graphtitle"> Concentración de C02 en el mapa </div>
+                <div class="graphtitle"> Concentración de CO2 en el mapa </div>
                 """)
                 # Show filtered results
                 if not filtered_df.empty:
@@ -840,7 +840,7 @@ def main():
                 
                 st.html(
                 """
-                <div class="graphtitle"> Concentración de PM2.5 y C02 por ruta </div>
+                <div class="graphtitle"> Concentración de PM2.5 y CO2 por ruta </div>
                 """)
 
                 dfchart5 = df.groupby('location')['PM2.5'].mean()
@@ -856,7 +856,7 @@ def main():
             with st.container(key="graphx2"):
                 st.html(
                 """
-                <div class="graphtitle"> Evolución por día del PM2.5 y C02 </div>
+                <div class="graphtitle"> Evolución por día del PM2.5 y CO2 </div>
                 """)
                 
                 dfchart6 = df.groupby('_time')['PM2.5'].mean()
