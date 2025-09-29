@@ -25,13 +25,13 @@ class ConnectionNotReady(Exception):
 # --------- Cliente (sin UI) ---------
 def _new_client() -> InfluxDBClient:
     """
-    Crea el cliente sin efectos secundarios de UI.
+    Crea el cliente 
     """
     return influxdb_client.InfluxDBClient(
         url=INFLUX_URL,
         token=INFLUX_TOKEN,
         org=INFLUX_ORG,
-        timeout=30_000,  # ms
+        timeout=30_000,  
         enable_gzip=True
     )
 
@@ -78,7 +78,6 @@ def run_query(client: InfluxDBClient, flux: str):
     Ejecuta una query Flux y convierte timestamps a zona horaria colombiana
     """
     df = client.query_api().query_data_frame(flux)
-    print(df.columns)
     # Convert timestamps to Colombian timezone
     df = convert_to_colombia_time(df)
     return df
@@ -100,7 +99,7 @@ def flux_query(bucket: Optional[str] = None, start: str = "-1h") -> str:
     r._measurement == "Lat" or
     r._measurement == "Lon"
   )
-  |> aggregateWindow(every: 10s, fn: last, createEmpty: false)   // ajusta ventana
+  |> aggregateWindow(every: 10s, fn: last, createEmpty: false)
   |> pivot(
       rowKey: ["_time","location"],
       columnKey: ["_measurement"],

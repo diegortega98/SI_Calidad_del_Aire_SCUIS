@@ -130,10 +130,10 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 path = {
                     "start_lon": current_point["Lon"],
                     "start_lat": current_point["Lat"],
-                    "start_elevation": 10,  # Reduced elevation to start point
+                    "start_elevation": 10,  
                     "end_lon": next_point["Lon"],
                     "end_lat": next_point["Lat"],
-                    "end_elevation": 10,    # Reduced elevation to end point
+                    "end_elevation": 10,    
                     "R": path_color[0],
                     "G": path_color[1],
                     "B": path_color[2],
@@ -158,13 +158,11 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 if len(sub) >= 2:  # Only process if we have at least 2 points
                     paths_data.extend(_build_for_subset(sub))
         else:
-            # If no location column, check if we have device ID or other grouping column
             if "header_deviceId" in df.columns:
                 for device, sub in df.groupby("header_deviceId"):
                     if len(sub) >= 2:
                         paths_data.extend(_build_for_subset(sub))
             else:
-                # Last resort - process all data together but with strict validation
                 paths_data = _build_for_subset(df)
 
         return paths_data
