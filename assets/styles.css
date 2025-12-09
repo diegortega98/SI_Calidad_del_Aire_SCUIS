@@ -5,20 +5,19 @@
 /* Global Variables */
 
 :root {
-    --primary: #63e07f;
+    --primary: #0fa539;
     --primaryLight: #ffba43;
     --secondary: #f1f1f1;
     --secondaryLight: #ffba43;
     --headerColor: #1a1a1a;
     --bodyTextColor: #1a1a1a;
     --bodyTextColorWhite: #fafbfc;
-    /* 13px - 16px */
-    --topperFontSize: clamp(0.8125rem, 1.6vw, 1rem);
+    /* 10px - 16px */
+    --containerFontSize: clamp(0.700rem, 0.5rem + 0.556vw, 1rem);
     /* 31px - 49px */
     --headerFontSize: clamp(1.9375rem, 3.9vw, 3.0625rem);
+    --graphTitleFontSize: clamp(0.900rem, 0.5rem + 0.556vw, 1rem);
     --bodyFontSize: 1rem;
-    /* 60px - 100px top and bottom */
-    --sectionPadding: clamp(3.75rem, 7.82vw, 6.25rem) 1rem;
 }
 
 /* ============================================
@@ -43,7 +42,8 @@
     padding: 12px;
     background-color: white;
     border-radius:12px;
-    max-height:530px;
+    min-height:200px;
+    max-height:400px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
@@ -57,7 +57,7 @@
 
 .st-key-map_controls{
     position: absolute;
-    opacity: 0.7;
+    opacity: 0.9;
     display: flex;
     padding: 5px 5px 5px 5px;
     max-width: 350px;
@@ -96,26 +96,26 @@
 
 .st-key-hidden_map_controls{
     position: absolute; /* <-- Ahora se posiciona respecto al contenedor */
-    opacity: 0.7;
-    max-width: 300px;
+    max-width: 400px;
     min-width: 120px;
     min-height: 40px;
     width: 5%;
     height: 10%;
-    top: 2%;
+    top: 3%;
     left: 1%;
-    backdrop-filter: blur(15.4px);
-    -webkit-backdrop-filter: blur(15.4px);
-    background-color: rgba(138, 138, 138, 0.4);
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    border-radius: 12px;
+    background: rgba(0,0,0,0);
     z-index: 2;
     justify-content: center; /* horizontal */
     align-items: center;
 }
 
-.st-key-hidden_map_controls:hover{
-    opacity: 1.0;
+.st-key-show_map_controls [data-testid="stBaseButton-secondary"]{
+    background-color: var(--primary);
+    color: var(--bodyTextColorWhite);
+    backdrop-filter: blur(15.4px);
+    -webkit-backdrop-filter: blur(15.4px);
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    border-radius: 12px;
 }
 
 .st-key-graphs{
@@ -154,13 +154,17 @@
 }
 
 .st-key-info {
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: stretch;
     text-align: center;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.st-key-global {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     background-color: white;
     border-radius: 12px;
     padding: 12px;
@@ -170,6 +174,13 @@
 .st-key-graph1, .st-key-pie, .st-key-graph2, .st-key-daily, .st-key-graphx1, .st-key-graphx2{
     flex: 50%;
     overflow: hidden;
+    justify-content: center;
+    align-items: stretch;
+    text-align: center;
+}
+
+[class="modebar-container"]{
+    visibility: hidden;
 }
 
 .st-key-col1, .st-key-col2, .st-key-col3, .st-key-col4{
@@ -178,17 +189,45 @@
 }
 
 .st-key-data{
-    padding: 12px;
-    background-color: white;
-    border-radius:12px;
-    min-height:620px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden; 
+    min-height: 625px;
 }
 
 [data-baseweb="button-group"]{
     padding: 8px;
     background-color: #f1f1f1;
     border-radius:12px;
+}
+
+.st-key-table [data-testid="stLayoutWrapper"]{
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+    justify-content: center;
+    align-items: stretch;
+    text-align: center;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    background-color: white;
+}
+
+[data-testid="stExpandSidebarButton"]{
+    background-color: var(--primary);
+    border-radius:12px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 7px 5px rgba(248, 228, 92, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 17px 10px rgba(248, 228, 92, 0);
+  }
 }
 
 [data-baseweb="slider"]{
@@ -204,7 +243,7 @@
 }
 
 [data-testid="stBaseButton-pillsActive"] > [data-testid="stMarkdownContainer"]{
-    font-size: 1rem;
+    font-size: var(--containerFontSize);
 }
 
 [data-testid="stSidebarUserContent"]{
@@ -225,23 +264,20 @@
     gap: 0; 
 }
 
-.graphtitle{
-    font-size: 1.25rem; 
+.graphtitle, .st-key-daily [data-testid="stMarkdownContainer"]{
+    font-size: var(--graphTitleFontSize); 
     font-weight: 600; 
     text-align: center;
+}
+
+.st-key-daily [data-testid="stWidgetLabel"] > *{
+    font-size:var(--bodyFontSize)
 }
 
 .dailytitle{
     font-size: 1.50rem; 
     font-weight: 600; 
     text-align: center;
-}
-
-[data-testid="stHorizontalBlock"] {
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    padding: 12px 12px 12px 12px;
-    background-color: white;
-    border-radius: 12px;
 }
 
 [data-testid="stSidebarContent"] {
@@ -271,24 +307,88 @@ header.stAppHeader {
     left: 40px
 }
 
+[data-testid="stBaseButton-elementToolbar"], [data-testid="stElementToolbarButtonContainer"]{
+    visibility:hidden;
+}
+
 /* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
-@media screen and (min-width: 1101px) {
-    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
-    font-size: 14px;
-  }
+.st-key-reload button, .st-key-map_container, .st-key-map_auto_refresh, .st-key-legend_selector [data-testid="stSelectbox"] > *, .st-key-map_controls, .st-key-toggle_map_controls, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"],
+.st-key-reload_data, .st-key-hidden_map_controls, .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
+    font-size: var(--containerFontSize);
 }
 
-@media screen and (max-width: 1100px) {
-    .mydiv, .st-key-toggle_map_controls [data-testid="stMarkdownContainer"], .st-key-reload_data [data-testid="stMarkdownContainer"], .st-key-hidden_map_controls [data-testid="stMarkdownContainer"]{
-    font-size: 10px;
-  }
+.st-key-map_controls{
+    font-size: clamp(0.200rem, 0.5rem + 0.556vw, 1rem);
 }
 
-@media (max-width: 1100px) {
-  .st-key-graphs, .st-key-graphsx, .st-key-main, .st-key-info, .st-key-graphsy {
+  .st-key-map_container, [data-testid="stDeckGlJsonChart"], [id="deckgl-wrapper"], [id="deckgl-overlay"] {
+    display:flex;
+}   
+
+[data-testid="stHeader"]{
+    width:0px;
+}
+
+   /* Mobile - 360px */
+@media only screen and (min-width: 0rem) {
+    .st-key-graphs, .st-key-graphsx, .st-key-main, .st-key-info, .st-key-graphsy {
     flex-wrap: wrap;
-  }
+    }
+
+    [data-baseweb="popover"]{
+        visibility: hidden;
+    }
+
+    .scrollable-container::-webkit-scrollbar {  
+    width: 6px; /* Increase scrollbar width for visibility */  
+    }  
+ 
+    .scrollable-container::-webkit-scrollbar-track {  
+    background: #f1f1f1; /* Light gray track */  
+    border-radius: 10px; /* Rounded corners */  
+    }  
+ 
+    .scrollable-container::-webkit-scrollbar-thumb {  
+    background: #888; /* Dark gray thumb */  
+    border-radius: 10px; /* Rounded thumb */  
+    }  
+ 
+    .scrollable-container::-webkit-scrollbar-thumb:hover {  
+    background: #555; /* Darker thumb on hover (optional) */  
+     }  
+ 
+    /* Firefox */  
+    .scrollable-container {  
+    scrollbar-width: thin; /* Make scrollbar visible */  
+    scrollbar-color: #888 #f1f1f1; /* Thumb color, track color */  
+    }  
+
+    .scrollable-container {  
+    -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */  
+    }  
+}
+
+/* Tablet - 768px */
+@media only screen and (min-width: 48rem) {
+    .st-key-graphs, .st-key-graphsx, .st-key-main, .st-key-info, .st-key-graphsy {
+    flex-wrap: wrap;
+    }
+
+    [data-baseweb="popover"]{
+        visibility: visible;
+    }
+}
+
+/* Small Desktop - 1024px */
+@media only screen and (min-width: 64rem) {
+    .st-key-graphs, .st-key-graphsx, .st-key-main, .st-key-info, .st-key-graphsy {
+    flex-wrap: nowrap;
+    } 
+
+    [data-baseweb="popover"]{
+        visibility: visible;
+    }
 }

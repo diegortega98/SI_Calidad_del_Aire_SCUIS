@@ -125,7 +125,7 @@ def main():
     st.html("""
 
     <div class="hero-section">
-        <h1 style="margin: 0; font-size: 36px; text-align: center;">Tabla de datos</h1>
+        <h1 style="padding: 0px 0px 0px 0px; font-size: clamp(1.400rem, 3.9vw, 3.0625rem); margin:10px 0px 0px 40px; text-align: center;">Tabla de datos</h1>
     </h2>
     </div>
     """)
@@ -144,7 +144,7 @@ def main():
         st.stop()
 
     # Query
-    flux = flux_query("messages", start="-30d")
+    flux = flux_query("messages", start="-100d")
 
     with st.spinner("Consultando datos..."):
         try:
@@ -199,69 +199,70 @@ def main():
                     else:
                         start_date = end_date = selected_date_range if hasattr(selected_date_range, 'year') else min_date
                 else:
-                    start_date = end_date = None   
+                    start_date = end_date = None 
 
-    if 'df' in locals() and not df.empty:
-        st.write("Esta página muestra una tabla con los datos de calidad del aire en el transporte público del AMB.")
-        
-        # Apply filters
-        filtered_df = df.copy()
-        
-        # Apply route filter
-        if selected_routes and 'location' in filtered_df.columns:
-            filtered_df = filtered_df[filtered_df['location'].isin(selected_routes)]
-        
-        # Apply date filter
-        if start_date and end_date and '_time' in filtered_df.columns:
-            filtered_df = filtered_df[
-                (filtered_df['_time'].dt.date >= start_date) & 
-                (filtered_df['_time'].dt.date <= end_date)
+    with st.container(key="table"):  
+
+        if 'df' in locals() and not df.empty:
+            # Apply filters
+            filtered_df = df.copy()
+            
+            # Apply route filter
+            if selected_routes and 'location' in filtered_df.columns:
+                filtered_df = filtered_df[filtered_df['location'].isin(selected_routes)]
+            
+            # Apply date filter
+            if start_date and end_date and '_time' in filtered_df.columns:
+                filtered_df = filtered_df[
+                    (filtered_df['_time'].dt.date >= start_date) & 
+                    (filtered_df['_time'].dt.date <= end_date)
+                ]
+            
+            # Show filter summary
+            col1, col2, col3 = st.columns(3, gap=None)
+            with col1:
+                st.html("""<div class="graphtitle"> Total de registros </div>""")
+                st.metric(label="Total de Registros", label_visibility="collapsed", value=f"{len(df):,}")
+            with col2:
+                st.html("""<div class="graphtitle"> Registros filtrados </div>""")
+                st.metric(label="Registros Filtrados", label_visibility="collapsed", value=f"{len(filtered_df):,}")
+            with col3:
+                st.html("""<div class="graphtitle"> Porcentaje mostrado </div>""")
+                if len(df) > 0:
+                    percentage = (len(filtered_df) / len(df)) * 100
+                    st.metric(label="Porcentaje Mostrado", label_visibility="collapsed", value=f"{percentage:.1f}%")
+            
+            # Check if filtered data is empty
+            if filtered_df.empty:
+                st.warning("No hay datos que coincidan con los filtros seleccionados.")
+                return
+            
+            # Filter and clean the dataframe
+            display_df = filtered_df.copy()
+            
+            # Remove complementary columns like result, table number, etc.
+            columns_to_remove = [
+                'result', 'table', '_start', '_stop', '_measurement', 
+                'header_result', 'table_number', '_field', '_value'
             ]
-        
-        # Show filter summary
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total de Registros", f"{len(df):,}")
-        with col2:
-            st.metric("Registros Filtrados", f"{len(filtered_df):,}")
-        with col3:
-            if len(df) > 0:
-                percentage = (len(filtered_df) / len(df)) * 100
-                st.metric("Porcentaje Mostrado", f"{percentage:.1f}%")
-        
-        st.markdown("---")
-        
-        # Check if filtered data is empty
-        if filtered_df.empty:
-            st.warning("No hay datos que coincidan con los filtros seleccionados.")
-            return
-        
-        # Filter and clean the dataframe
-        display_df = filtered_df.copy()
-        
-        # Remove complementary columns like result, table number, etc.
-        columns_to_remove = [
-            'result', 'table', '_start', '_stop', '_measurement', 
-            'header_result', 'table_number', '_field', '_value'
-        ]
-        
-        # Remove unwanted columns if they exist
-        for col in columns_to_remove:
-            if col in display_df.columns:
-                display_df = display_df.drop(columns=[col])
-        
-        # Format time in UTC format - separate date and time
-        if '_time' in display_df.columns:
-            # Separate date and time into different columns
-            display_df['Hora'] = display_df['_time'].dt.time
-            display_df = display_df.drop(columns=['_time'])
-        
-        st.dataframe(
-            display_df,
-            key="data",
-            height=600,
-            on_select="rerun",
-        )
+            
+            # Remove unwanted columns if they exist
+            for col in columns_to_remove:
+                if col in display_df.columns:
+                    display_df = display_df.drop(columns=[col])
+            
+            # Format time in UTC format - separate date and time
+            if '_time' in display_df.columns:
+                # Separate date and time into different columns
+                display_df['Hora'] = display_df['_time'].dt.time
+                display_df = display_df.drop(columns=['_time'])
+            
+            st.dataframe(
+                display_df,
+                key="data",
+                height=600,
+                on_select="rerun",
+            )
         
 
 if __name__ == "__main__" or st._is_running_with_streamlit:

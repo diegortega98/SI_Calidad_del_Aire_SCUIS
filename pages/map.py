@@ -9,7 +9,7 @@ from influxdb_client import InfluxDBClient
 from utils.timezone_utils import format_colombia_time
 
 if "map_controls" not in st.session_state:
-    st.session_state.map_controls = True
+    st.session_state.map_controls = False
 
 # Cachea el cliente de conexión.
 @st.cache_resource(show_time=True,show_spinner=False)
@@ -188,7 +188,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             pitch=45
         )         
             )
-            st.pydeck_chart(r, height = 400)
+            st.pydeck_chart(r, height=380)
             return
 
         # Filter out invalid coordinates (-1, -1) before processing
@@ -213,7 +213,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             pitch=45
         )         
             )
-            st.pydeck_chart(r, height = 400)
+            st.pydeck_chart(r, height=380)
             return
 
         # Crear columna layer como la media de los valores de contaminación
@@ -470,7 +470,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
         )
         
         # Mostrar en Streamlit
-        st.pydeck_chart(r, height = 505)
+        st.pydeck_chart(r, height=380)
 
         if st.session_state.map_controls:
 
@@ -654,17 +654,17 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     </div>"""
                     )
 
-                if st.button("Recargar datos", type="secondary", key="reload_data",on_click=lambda: st.rerun()):
+                if st.button("Recargar datos", type="secondary", key="reload_data", on_click=lambda: st.rerun()):
                     st.rerun()
 
 
-                st.button("Ocultar leyenda", key="toggle_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
+                st.button("Ocultar leyenda", key="toggle_map_controls", on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
         else:
             # hidden controls
 
             with st.container(key="hidden_map_controls"):
 
-                st.button("Leyenda", key="show_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
+                st.button("Mostrar leyenda", key="show_map_controls", on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
 
 @st.fragment(run_every=5)
 def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories=None, selected_hours=None):
@@ -673,7 +673,7 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
     
     # Re-query fresh data
     fields = ["Lat", "Lon", "CO2", "PM2_5", "Temperature", "location"]
-    flux = flux_query("messages", start="-30d")
+    flux = flux_query("messages", start="-100d")
     
     try:
         client = get_cached_client()
@@ -724,7 +724,7 @@ def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_
 
 def main():
     st.html("""
-    <h1 style="margin: 0; font-size: 36px; text-align: center;">Dashboard de contaminación en rutas del AMB</h1>
+    <h1 style="padding: 0px 0px 0px 0px; font-size: clamp(1.400rem, 3.9vw, 3.0625rem); margin:10px 0px 0px 40px; text-align: center;">Dashboard de contaminación en rutas del AMB</h1>
     """)
 
     # Establish connection
@@ -742,7 +742,7 @@ def main():
         st.stop()
 
     # Query to fetch data
-    flux = flux_query(bucket="messages", start="-30d")
+    flux = flux_query(bucket="messages", start="-100d")
 
     with st.spinner("Consultando datos..."):
         try:
@@ -918,7 +918,7 @@ def main():
                     x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
-                    st.plotly_chart(fig, use_container_width=True, theme=None)
+                    st.plotly_chart(fig, theme=None, height="content")
 
                 with st.container(key="graph2"):
                     st.html(
@@ -936,7 +936,7 @@ def main():
                     x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
                     
-                    st.plotly_chart(fig2, use_container_width=True, theme=None)
+                    st.plotly_chart(fig2, theme=None, height="content")
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

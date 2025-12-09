@@ -31,7 +31,7 @@ def plot_map2(df):
     PM25_THRESHOLDS = [
                     (0.0, 12.0, 0, 50, "Buena", "#00e400"),
                     (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
-                    (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
+                    (35.5, 55.4, 101, 150, "Dañina sens.", "#ff7e00"),
                     (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
                     (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
                     (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
@@ -166,8 +166,6 @@ def plot_map2(df):
 def plot_map(df, selected_aqi_categories=None, auto_refresh=False):
     # Definir constantes para las columnas de datos ------------------
 
-   
-    
     # Filter out invalid data (-1 values in key columns)
     df = df[
         (df.get('CO2', 0) != -1) & 
@@ -188,8 +186,6 @@ def plot_map(df, selected_aqi_categories=None, auto_refresh=False):
         layers=[], 
         map_style='road',
         initial_view_state=pdk.ViewState(
-        latitude=7.1333,
-        longitude=-73.1333,
         zoom=14,
         bearing=0,
         pitch=45
@@ -284,7 +280,7 @@ def main():
     st.html("""
 
     <div class="hero-section">
-        <h1 style="margin: 0; font-size: 36px; text-align: center;">Análisis estadístico</h1>
+        <h1 style="padding: 0px 0px 0px 0px; font-size: clamp(1.400rem, 3.9vw, 3.0625rem); margin:10px 0px 0px 40px; text-align: center;">Análisis estadístico</h1>
     </h2>
     </div>
     """)
@@ -303,7 +299,7 @@ def main():
         st.stop()
 
     # Query
-    flux = flux_query(bucket="messages", start="-30d")
+    flux = flux_query(bucket="messages", start="-100d")
 
     with st.spinner("Consultando datos..."):
         try:
@@ -327,90 +323,91 @@ def main():
             (df.get('PM2.5', 0) != -1)
         ].copy()
         filtered_count = len(df)
-        
 
-        # Convert routes to integers for better handling
+        with st.container(key="global"):
 
-        st.write("Total de registros analizados: " + str(len(df)))
-        
-        # Calculate key metrics
-        try:
-            # PM2.5 thresholds for AQI classification
-            PM25_THRESHOLDS = [
-                (0.0, 12.0, 0, 50, "Buena", "#00e400"),
-                (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
-                (35.5, 55.4, 101, 150, "Dañina para sensibles", "#ff7e00"),
-                (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
-                (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
-                (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
-            ]
+            # Convert routes to integers for better handling
+
+            st.write("Total de registros analizados: " + str(len(df)))
             
-            def get_pm25_category(pm25_value):
-                for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
-                    if low <= pm25_value <= high:
-                        return category
-                return PM25_THRESHOLDS[-1][4]  # Return "Peligrosa" if out of range
-            
-            # Most dangerous hour (highest average PM2.5)
-            df['hour'] = df['_time'].dt.hour
-            hourly_pm25 = df.groupby('hour')['PM2.5'].mean()
-            most_dangerous_hour = hourly_pm25.idxmax()
-            max_pm25_value = hourly_pm25.max()
-            
-            # Most contaminated route (highest average PM2.5)
-            route_pm25 = df.groupby('location')['PM2.5'].mean()
-            most_contaminated_route = route_pm25.idxmax()
-            max_route_pm25 = route_pm25.max()
-            
-            # Least contaminated route (lowest average PM2.5)
-            least_contaminated_route = route_pm25.idxmin()
-            min_route_pm25 = route_pm25.min()
-            
-            # Most common air quality category
-            df['pm25_category'] = df['PM2.5'].apply(get_pm25_category)
-            most_common_category = df['pm25_category'].mode().iloc[0] if not df['pm25_category'].mode().empty else "No disponible"
-            category_count = df['pm25_category'].value_counts().iloc[0] if not df['pm25_category'].value_counts().empty else 0
-            category_percentage = (category_count / len(df) * 100) if len(df) > 0 else 0
-            
-            with st.container(key="info"):
-                with st.container(key="col1"):
-                    st.html("""<div class="graphtitle"> Hora con mayor concentración PM2.5 </div>""")
-                    st.metric(
-                        label="Hora Más Peligrosa",
-                        label_visibility="collapsed",
-                        value=f"{most_dangerous_hour}:00",
-                        delta=f"{max_pm25_value:.1f} μg/m³"
-                    )
+            # Calculate key metrics
+            try:
+                # PM2.5 thresholds for AQI classification
+                PM25_THRESHOLDS = [
+                    (0.0, 12.0, 0, 50, "Buena", "#00e400"),
+                    (12.1, 35.4, 51, 100, "Moderada", "#ffff00"),
+                    (35.5, 55.4, 101, 150, "Dañina sens.", "#ff7e00"),
+                    (55.5, 150.4, 151, 200, "Dañina", "#ff0000"),
+                    (150.5, 250.4, 201, 300, "Muy dañina", "#8f3f97"),
+                    (250.5, 500.4, 301, 500, "Peligrosa", "#7e0023")
+                ]
                 
-                with st.container(key="col2"):
-                    st.html("""<div class="graphtitle"> Ruta con mayor concentración PM2.5 </div>""")
-                    st.metric(
-                        label="Ruta Más Contaminada",
-                        label_visibility="collapsed",
-                        value=most_contaminated_route,
-                        delta=f"{max_route_pm25:.1f} μg/m³"
-                    )
+                def get_pm25_category(pm25_value):
+                    for low, high, aqi_low, aqi_high, category, color_hex in PM25_THRESHOLDS:
+                        if low <= pm25_value <= high:
+                            return category
+                    return PM25_THRESHOLDS[-1][4]  # Return "Peligrosa" if out of range
                 
-                with st.container(key="col3"):
-                    st.html("""<div class="graphtitle"> Ruta con menor concentración PM2.5 </div>""")
-                    st.metric(
-                        label="Ruta Menos Contaminada",
-                        label_visibility="collapsed", 
-                        value=least_contaminated_route,
-                        delta=f"{min_route_pm25:.1f} μg/m³"
-                    )
+                # Most dangerous hour (highest average PM2.5)
+                df['hour'] = df['_time'].dt.hour
+                hourly_pm25 = df.groupby('hour')['PM2.5'].mean()
+                most_dangerous_hour = hourly_pm25.idxmax()
+                max_pm25_value = hourly_pm25.max()
                 
-                with st.container(key="col4"):
-                    st.html("""<div class="graphtitle"> Categoría más común de PM2.5 </div>""")
-                    st.metric(
-                        label="Categoría Más Común",
-                        label_visibility="collapsed",
-                        value=most_common_category,
-                        delta=f"{category_percentage:.1f}% de mediciones"
-                    )
+                # Most contaminated route (highest average PM2.5)
+                route_pm25 = df.groupby('location')['PM2.5'].mean()
+                most_contaminated_route = route_pm25.idxmax()
+                max_route_pm25 = route_pm25.max()
                 
-        except Exception as e:
-            st.warning(f"No se pudieron calcular los indicadores clave: {e}")
+                # Least contaminated route (lowest average PM2.5)
+                least_contaminated_route = route_pm25.idxmin()
+                min_route_pm25 = route_pm25.min()
+                
+                # Most common air quality category
+                df['pm25_category'] = df['PM2.5'].apply(get_pm25_category)
+                most_common_category = df['pm25_category'].mode().iloc[0] if not df['pm25_category'].mode().empty else "No disponible"
+                category_count = df['pm25_category'].value_counts().iloc[0] if not df['pm25_category'].value_counts().empty else 0
+                category_percentage = (category_count / len(df) * 100) if len(df) > 0 else 0
+                
+                with st.container(key="info"):
+                    with st.container(key="col1"):
+                        st.html("""<div class="graphtitle"> Hora con mayor concentración PM2.5 </div>""")
+                        st.metric(
+                            label="Hora Más Peligrosa",
+                            label_visibility="collapsed",
+                            value=f"{most_dangerous_hour}:00",
+                            delta=f"{max_pm25_value:.1f} μg/m³"
+                        )
+                    
+                    with st.container(key="col2"):
+                        st.html("""<div class="graphtitle"> Ruta con mayor concentración PM2.5 </div>""")
+                        st.metric(
+                            label="Ruta Más Contaminada",
+                            label_visibility="collapsed",
+                            value=most_contaminated_route,
+                            delta=f"{max_route_pm25:.1f} μg/m³"
+                        )
+                    
+                    with st.container(key="col3"):
+                        st.html("""<div class="graphtitle"> Ruta con menor concentración PM2.5 </div>""")
+                        st.metric(
+                            label="Ruta Menos Contaminada",
+                            label_visibility="collapsed", 
+                            value=least_contaminated_route,
+                            delta=f"{min_route_pm25:.1f} μg/m³"
+                        )
+                    
+                    with st.container(key="col4"):
+                        st.html("""<div class="graphtitle"> Categoría más común de PM2.5 </div>""")
+                        st.metric(
+                            label="Categoría Más Común",
+                            label_visibility="collapsed",
+                            value=most_common_category,
+                            delta=f"{category_percentage:.1f}% de mediciones"
+                        )
+                    
+            except Exception as e:
+                st.warning(f"No se pudieron calcular los indicadores clave: {e}")
 
         # Define available parameters (used across columns)
         available_parameters = ["CO2"]
@@ -418,13 +415,12 @@ def main():
         # Apply filters to dataframe
         filtered_df = df.copy()
         
-        
         with st.container(key="main"):
             with st.container(key="pie"):
                 try:
                     st.html(
                     """
-                    <div class="graphtitle"> Distribución de clasificaciones de AQI basadas en PM2.5 </div>
+                    <div class="graphtitle"> Distribución global de clasificaciones de AQI basadas en PM2.5 </div>
                     """)
                     
                     # Calculate category distribution
@@ -438,7 +434,7 @@ def main():
                         color=category_counts.index,
                         color_discrete_map={'Buena':'#00e400',
                                  "Moderada":"#ffff00",
-                                 "Dañina para sensibles":"#ff7e00",
+                                 "Dañina sens.":"#ff7e00",
                                  'Dañina':'#ff0000',
                                  "Muy dañina":"#8f3f97",
                                  "Peligrosa":"#7e0023"})
@@ -447,10 +443,13 @@ def main():
                     fig_pie.update_traces(textposition='inside', textinfo='percent+label')
                     fig_pie.update_layout(
                         showlegend=True,
-                        margin=dict(t=20, b=20, l=20, r=20)
+                        margin=dict(t=10, b=10, l=10, r=10),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        height=300
                     )
                     
-                    st.plotly_chart(fig_pie, use_container_width=True, theme=None, key="pie_categories")
+                    st.plotly_chart(fig_pie, use_container_width=True, key="pie_categories")
                     
                 except Exception as e:
                     st.warning(f"No se pudo generar el gráfico de categorías: {e}")
@@ -492,23 +491,29 @@ def main():
                             col_pm, col_co2, col_temp = st.columns(3)
                             
                             with col_pm:
+                                st.html("""<div class="graphtitle"> PM2.5 Promedio </div>""")
                                 st.metric(
-                                    "PM2.5 Promedio",
-                                    f"{selected_stats['PM2.5_mean']:.1f}",
+                                    label="PM2.5 Promedio",
+                                    label_visibility="collapsed",
+                                    value=f"{selected_stats['PM2.5_mean']:.1f}",
                                     delta=f"Max: {selected_stats['PM2.5_max']:.1f}"
                                 )
                             
                             with col_co2:
+                                st.html("""<div class="graphtitle"> CO2 Promedio </div>""")
                                 st.metric(
-                                    "CO2 Promedio", 
-                                    f"{selected_stats['CO2_mean']:.1f}",
+                                    label="CO2 Promedio", 
+                                    label_visibility="collapsed",
+                                    value=f"{selected_stats['CO2_mean']:.1f}",
                                     delta=f"Max: {selected_stats['CO2_max']:.1f}"
                                 )
                             
                             with col_temp:
+                                st.html("""<div class="graphtitle"> Temp. Promedio </div>""")
                                 st.metric(
-                                    "Temp Promedio",
-                                    f"{selected_stats['Temperature_mean']:.1f}°C",
+                                    label="Temp. Promedio",
+                                    label_visibility="collapsed",
+                                    value=f"{selected_stats['Temperature_mean']:.1f}°C",
                                     delta=f"Max: {selected_stats['Temperature_max']:.1f}°C"
                                 )
                             
@@ -540,14 +545,14 @@ def main():
             with st.container(key="graph1"):
                 st.html(
                 """
-                <div class="graphtitle"> Puntos con concentración de PM2.5 más alta</div>
+                <div class="graphtitle"> Puntos con máxima concentración de PM2.5 a nivel global</div>
                 """)
                 
                 # Parameters filter - Multiselect
                 default_selected = ["PM2.5"]
 
                 # AQI Category Filter
-                aqi_categories = ["Buena", "Moderada", "Dañina para sensibles", "Dañina", "Muy dañina", "Peligrosa"]
+                aqi_categories = ["Buena", "Moderada", "Dañina sens.", "Dañina", "Muy dañina", "Peligrosa"]
                     
                 # Apply filters to dataframe
                 dfchart4 = df.nlargest(15, 'PM2.5', keep='first')
@@ -562,7 +567,7 @@ def main():
 
                 st.html(
                 """
-                <div class="graphtitle"> Concentración de CO2 en el mapa </div>
+                <div class="graphtitle"> Puntos con máxima concentración de CO2 a nivel global </div>
                 """)
                 # Show filtered results
                 if not filtered_df.empty:
