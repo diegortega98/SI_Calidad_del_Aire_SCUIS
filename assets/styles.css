@@ -433,7 +433,7 @@ header.stAppHeader {
     }
 
     [data-baseweb="popover"]:has([data-baseweb="calendar"]){
-        visibility: visible;
+        visibility: hidden;
     }
 }
 
@@ -444,7 +444,7 @@ header.stAppHeader {
     } 
 
     [data-baseweb="popover"]:has([data-baseweb="calendar"]){
-        visibility: visible;
+        visibility: hidden;
     }
 
     .st-key-pie_categories{
