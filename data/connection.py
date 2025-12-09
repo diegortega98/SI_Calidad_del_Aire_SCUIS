@@ -85,7 +85,7 @@ def run_query(client: InfluxDBClient, flux: str):
 
 def flux_query(bucket: Optional[str] = None, start: str = "-1h") -> str:
     """
-    Construye un Flux para obtener TODAS las métricas disponibles sin ningún filtro de measurement.
+    Genera una query Flux para obtener datos de sensores.
     """
     bucket = bucket or DEFAULT_BUCKET
     

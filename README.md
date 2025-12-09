@@ -19,10 +19,10 @@
 
 ### Configuración
 
-1. ✅ Verificar que **InfluxDB** esté ejecutándose en `localhost:8086`
-2. ✅ Asegurar que el **token de autenticación** sea válido
-3. ✅ Verificar que la organización `"smart-campus"` exista
-4. ✅ Verificar que el bucket `"messages"` contenga datos
+1. Verificar que **InfluxDB** esté ejecutándose en `localhost:8086`
+2. Asegurar que el **token de autenticación** sea válido
+3. Verificar que la organización `"smart-campus"` exista
+4. Verificar que el bucket `"messages"` contenga datos
 
 ### Ejecución
 

@@ -666,14 +666,14 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
 
                 st.button("Leyenda", key="show_map_controls",on_click=lambda: st.session_state.update(map_controls=not st.session_state.map_controls))
 
-@st.fragment(run_every=5)
+@st.fragment(run_every=10)
 def auto_refresh_map(date_range, selected_routes, selected_parameters, selected_aqi_categories=None, selected_hours=None):
     """Fragment that runs every 5 seconds when auto-refresh is enabled"""
     import pandas as pd
     
     # Re-query fresh data
     fields = ["Lat", "Lon", "CO2", "PM2_5", "Temperature", "location"]
-    flux = flux_query("messages", start="-30d")
+    flux = flux_query("messages", start="-90d")
     
     try:
         client = get_cached_client()
@@ -742,7 +742,7 @@ def main():
         st.stop()
 
     # Query to fetch data
-    flux = flux_query(bucket="messages", start="-30d")
+    flux = flux_query(bucket="messages", start="-90d")
 
     with st.spinner("Consultando datos..."):
         try:
