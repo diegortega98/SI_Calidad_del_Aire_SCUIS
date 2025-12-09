@@ -160,7 +160,7 @@ def plot_map2(df):
     )
     
     # Mostrar en Streamlit
-    st.pydeck_chart(r, height = 450)
+    st.pydeck_chart(r, height = 300)
 
 @st.fragment()
 def plot_map(df, selected_aqi_categories=None, auto_refresh=False):
@@ -191,7 +191,7 @@ def plot_map(df, selected_aqi_categories=None, auto_refresh=False):
         pitch=45
     )         
         )
-        st.pydeck_chart(r, height = 400)
+        st.pydeck_chart(r, height = 300)
         return
 
     # Initialize layers list
@@ -272,7 +272,7 @@ def plot_map(df, selected_aqi_categories=None, auto_refresh=False):
     )
         
     # Mostrar en Streamlit
-    st.pydeck_chart(r, height=450)
+    st.pydeck_chart(r, height=300)
 
 def main():
 
@@ -475,8 +475,14 @@ def main():
                     # Date selector
                     available_dates = sorted(daily_stats.index.tolist(), reverse=True)
                     if available_dates:
+                        st.html(
+                        """
+                        <div class="datetitle"> Seleccionar fecha: </div>
+                        """)
+
                         selected_date = st.selectbox(
                             "Seleccionar fecha:",
+                            label_visibility="collapsed",
                             options=available_dates,
                             index=0,  # Default to most recent date
                             key="date_selector"
@@ -591,6 +597,12 @@ def main():
                 x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                fig5.update_layout(
+                    showlegend=True, 
+                    margin=dict(t=20, b=40, l=40, r=40),
+                    height=300
+                )
+
                 st.plotly_chart(fig5, use_container_width=True, theme=None, key="fig5")
 
             with st.container(key="graphx2"):
@@ -607,7 +619,18 @@ def main():
                 x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                fig6.update_layout(
+                    showlegend=True, 
+                    margin=dict(t=20, b=40, l=40, r=40),
+                    height=300
+                )
+
                 st.plotly_chart(fig6, use_container_width=True, theme=None, key="fig6")
+
+    st.html(
+    """
+    <div class="footer">Diego Andrés Ortega Gelvez y Jose Fredy Navarro Motta<br>SISTEMA DE INFORMACIÓN IOT PARA ANÁLISIS DE CALIDAD DEL AIRE</div>
+    """) 
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 

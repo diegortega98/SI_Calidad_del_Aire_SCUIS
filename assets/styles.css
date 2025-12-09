@@ -13,10 +13,10 @@
     --bodyTextColor: #1a1a1a;
     --bodyTextColorWhite: #fafbfc;
     /* 10px - 16px */
-    --containerFontSize: clamp(0.700rem, 0.5rem + 0.556vw, 1rem);
+    --containerFontSize: clamp(0.720rem, 0.5rem + 0.556vw, 1rem);
     /* 31px - 49px */
     --headerFontSize: clamp(1.9375rem, 3.9vw, 3.0625rem);
-    --graphTitleFontSize: clamp(0.900rem, 0.5rem + 0.556vw, 1rem);
+    --graphTitleFontSize: clamp(0.900rem, 0.7rem + 0.556vw, 1.5rem);
     --bodyFontSize: 1rem;
 }
 
@@ -24,12 +24,13 @@
    MAP STYLES
    ============================================ */
 
-.mydiv {
+.contaminantdiv {
     justify-content: center;
     align-items: center;
     width: 100%;
     height: 100%;
-    border-radius: 12px;
+    border-radius: 12px; 
+    font-size: var(--containerFontSize);
 }
 
 .st-key-reload button {
@@ -39,11 +40,9 @@
 .st-key-map_container{
     position: relative;
     z-index: 0;
-    padding: 12px;
+    padding: 12px 12px 0px 12px;
     background-color: white;
     border-radius:12px;
-    min-height:200px;
-    max-height:400px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
@@ -129,7 +128,20 @@
     overflow: hidden;
 }
 
-.st-key-main ,.st-key-graphsx, .st-key-graphsy{
+.st-key-main{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: stretch;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: visible;
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.st-key-graphsx, .st-key-graphsy{
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     display: flex;
     flex-direction: row;
@@ -150,7 +162,6 @@
     border-radius: 12px;
     padding: 12px;
     overflow: hidden;
-    min-height: 600px;
 }
 
 .st-key-info {
@@ -171,12 +182,28 @@
     overflow: hidden;
 }
 
-.st-key-graph1, .st-key-pie, .st-key-graph2, .st-key-daily, .st-key-graphx1, .st-key-graphx2{
+.st-key-pie{
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    flex: 50%;
+    text-align: center;
+    align-items: space-between;
+    background-color: white;
+}
+
+.st-key-daily{
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    background-color: white;
+}
+
+.st-key-graph1, .st-key-graph2, .st-key-daily, .st-key-graphx1, .st-key-graphx2{
     flex: 50%;
     overflow: hidden;
     justify-content: center;
     align-items: stretch;
     text-align: center;
+    padding: 12px;
 }
 
 [class="modebar-container"]{
@@ -270,6 +297,33 @@
     text-align: center;
 }
 
+.datetitle{
+    font-size: var(--graphTitleFontSize); 
+    text-align: center;
+    margin: 0;
+}
+
+.footer{
+    font-size: var(--graphTitleFontSize); 
+    color: var(--bodyTextColorWhite);
+    font-weight: 600; 
+    text-align: center;
+    background-color:var(--primary);
+    margin-top: 20px;
+    margin-left: calc((-100vw + 100%) / 2);
+    margin-right: calc((-100vw + 100%) / 2);
+    margin-bottom: -60px;
+    padding: 5px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.st-key-daily{
+    padding:12px;
+}
+
 .st-key-daily [data-testid="stWidgetLabel"] > *{
     font-size:var(--bodyFontSize)
 }
@@ -286,7 +340,7 @@
     border-radius: 0px;
 }
 
-.st-key-main [data-testid="stHorizontalBlock"] {
+.st-key-daily, .st-key-pie{
     box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px;
     border-radius: 0px;
 }
@@ -297,6 +351,7 @@ header.stAppHeader {
 
 .stMainBlockContainer {
     padding-top: 0.2rem;
+    padding-bottom: 1.8rem;
 }
 
 .st-key-app_title .stHeading {
@@ -338,7 +393,7 @@ header.stAppHeader {
     flex-wrap: wrap;
     }
 
-    [data-baseweb="popover"]{
+    [data-baseweb="popover"]:has([data-baseweb="calendar"]){
         visibility: hidden;
     }
 
@@ -390,5 +445,9 @@ header.stAppHeader {
 
     [data-baseweb="popover"]{
         visibility: visible;
+    }
+
+    .st-key-pie_categories{
+        margin-top: 40px;
     }
 }

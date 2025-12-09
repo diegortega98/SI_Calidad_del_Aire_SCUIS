@@ -263,6 +263,11 @@ def main():
                 height=600,
                 on_select="rerun",
             )
+
+    st.html(
+    """
+    <div class="footer">Diego Andrés Ortega Gelvez y Jose Fredy Navarro Motta<br>SISTEMA DE INFORMACIÓN IOT PARA ANÁLISIS DE CALIDAD DEL AIRE</div>
+    """) 
         
 
 if __name__ == "__main__" or st._is_running_with_streamlit:

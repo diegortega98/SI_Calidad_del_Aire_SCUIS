@@ -188,7 +188,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             pitch=45
         )         
             )
-            st.pydeck_chart(r, height=380)
+            st.pydeck_chart(r, height=450)
             return
 
         # Filter out invalid coordinates (-1, -1) before processing
@@ -213,7 +213,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
             pitch=45
         )         
             )
-            st.pydeck_chart(r, height=380)
+            st.pydeck_chart(r, height=450)
             return
 
         # Crear columna layer como la media de los valores de contaminación
@@ -470,7 +470,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
         )
         
         # Mostrar en Streamlit
-        st.pydeck_chart(r, height=380)
+        st.pydeck_chart(r, height=450)
 
         if st.session_state.map_controls:
 
@@ -487,7 +487,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 if legend_option == "PM2.5 (µg/m³)":
                     #leyenda PM2.5
                     st.html(
-                    """<div class="mydiv">
+                    """<div class="contaminantdiv">
                     <table style="
                         border-spacing: 0;
                         text-align: center;
@@ -498,41 +498,41 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                     ">
                         <thead>
                         <tr style="background-color: #333; color: white;">
-                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">PM2.5 (µg/m³)</th>
-                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Categoría</th>
-                            <th style="padding: 6px; border-bottom: 1px solid #ccc;">Color</th>
+                            <th style="padding: 4px; border-bottom: 1px solid #ccc;">PM2.5 (µg/m³)</th>
+                            <th style="padding: 4px; border-bottom: 1px solid #ccc;">Categoría</th>
+                            <th style="padding: 4px; border-bottom: 1px solid #ccc;">Color</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">0.0 - 12.0</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Buena</td>
-                            <td style="background-color: #00e400; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">0.0 - 12.0</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Buena</td>
+                            <td style="background-color: #00e400; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">12.1 - 35.4</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Moderada</td>
-                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">12.1 - 35.4</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Moderada</td>
+                            <td style="background-color: #ffff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">35.5 - 55.4</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina para sensibles</td>
-                            <td style="background-color: #ff7e00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">35.5 - 55.4</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Dañina para sensibles</td>
+                            <td style="background-color: #ff7e00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">55.5 - 150.4</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Dañina</td>
-                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">55.5 - 150.4</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Dañina</td>
+                            <td style="background-color: #ff0000; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">150.5 - 250.4</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy dañina</td>
-                            <td style="background-color: #8f3f97; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">150.5 - 250.4</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Muy dañina</td>
+                            <td style="background-color: #8f3f97; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">250.5 - 500.4</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligrosa</td>
-                            <td style="background-color: #7e0023; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">250.5 - 500.4</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Peligrosa</td>
+                            <td style="background-color: #7e0023; padding: 2px;">&nbsp;</td>
                         </tr>
                         </tbody>
                     </table>
@@ -542,7 +542,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 elif legend_option == "CO2 (ppm)":
                     # CO2 legend
                     st.html(
-                    """<div class="mydiv">
+                    """<div class="contaminantdiv">
                     <table style="
                         border-spacing: 0;
                         text-align: center;
@@ -560,34 +560,34 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                         </thead>
                         <tbody>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">≤ 400</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Exterior</td>
-                            <td style="background-color: #00ff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">≤ 400</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Exterior</td>
+                            <td style="background-color: #00ff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">401 - 600</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Aceptable</td>
-                            <td style="background-color: #80ff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">401 - 600</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Aceptable</td>
+                            <td style="background-color: #80ff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">601 - 1000</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Somnolencia</td>
-                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">601 - 1000</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Somnolencia</td>
+                            <td style="background-color: #ffff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">1001 - 5000</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Límite laboral</td>
-                            <td style="background-color: #ffa500; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">1001 - 5000</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Límite laboral</td>
+                            <td style="background-color: #ffa500; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">5001 - 10000</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Peligroso</td>
-                            <td style="background-color: #ff4500; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">5001 - 10000</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Peligroso</td>
+                            <td style="background-color: #ff4500; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">> 10000</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Inmediatamente peligroso</td>
-                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">> 10000</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Inmediatamente peligroso</td>
+                            <td style="background-color: #ff0000; padding: 2px;">&nbsp;</td>
                         </tr>
                         </tbody>
                     </table>
@@ -597,7 +597,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 elif legend_option == "Temperatura (°C)":
                     # Temperature legend
                     st.html(
-                    """<div class="mydiv">
+                    """<div class="contaminantdiv">
                     <table style="
                         border-spacing: 0;
                         text-align: center;
@@ -615,39 +615,39 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                         </thead>
                         <tbody>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">≤ 10</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy frío</td>
-                            <td style="background-color: #0000ff; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">≤ 10</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Muy frío</td>
+                            <td style="background-color: #0000ff; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">11 - 15</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Frío</td>
-                            <td style="background-color: #0080ff; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">11 - 15</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Frío</td>
+                            <td style="background-color: #0080ff; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">16 - 20</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Fresco</td>
-                            <td style="background-color: #00ffff; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">16 - 20</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Fresco</td>
+                            <td style="background-color: #00ffff; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">21 - 25</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Confortable</td>
-                            <td style="background-color: #00ff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">21 - 25</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Confortable</td>
+                            <td style="background-color: #00ff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">26 - 30</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Cálido</td>
-                            <td style="background-color: #ffff00; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">26 - 30</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Cálido</td>
+                            <td style="background-color: #ffff00; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">31 - 35</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Caliente</td>
-                            <td style="background-color: #ffa500; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">31 - 35</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Caliente</td>
+                            <td style="background-color: #ffa500; padding: 2px;">&nbsp;</td>
                         </tr>
                         <tr>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">> 35</td>
-                            <td style="padding: 4px; background-color: rgba(255, 255, 255, 0.6);">Muy caliente</td>
-                            <td style="background-color: #ff0000; padding: 4px;">&nbsp;</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">> 35</td>
+                            <td style="padding: 2px; background-color: rgba(255, 255, 255, 0.6);">Muy caliente</td>
+                            <td style="background-color: #ff0000; padding: 2px;">&nbsp;</td>
                         </tr>
                         </tbody>
                     </table>
@@ -918,7 +918,13 @@ def main():
                     x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
-                    st.plotly_chart(fig, theme=None, height="content")
+                    fig.update_layout(
+                        showlegend=True, 
+                        margin=dict(t=20, b=40, l=40, r=40),
+                        height=300
+                    )
+
+                    st.plotly_chart(fig, theme=None)
 
                 with st.container(key="graph2"):
                     st.html(
@@ -935,8 +941,19 @@ def main():
                     'Promedio PM2.5': dfchart2x.values, 'Promedio CO2': dfchart2y.values,},
                     x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
+
+                    fig2.update_layout(
+                        showlegend=True, 
+                        margin=dict(t=20, b=40, l=40, r=40),
+                        height=300
+                    )
                     
                     st.plotly_chart(fig2, theme=None, height="content")
+
+    st.html(
+    """
+    <div class="footer">Diego Andrés Ortega Gelvez y Jose Fredy Navarro Motta<br>SISTEMA DE INFORMACIÓN IOT PARA ANÁLISIS DE CALIDAD DEL AIRE</div>
+    """)            
 
 if __name__ == "__main__" or st._is_running_with_streamlit:
 
