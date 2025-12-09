@@ -432,7 +432,7 @@ header.stAppHeader {
     flex-wrap: wrap;
     }
 
-    [data-baseweb="popover"]{
+    [data-baseweb="popover"]:has([data-baseweb="calendar"]){
         visibility: visible;
     }
 }
@@ -443,7 +443,7 @@ header.stAppHeader {
     flex-wrap: nowrap;
     } 
 
-    [data-baseweb="popover"]{
+    [data-baseweb="popover"]:has([data-baseweb="calendar"]){
         visibility: visible;
     }
 
