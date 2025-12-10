@@ -115,7 +115,7 @@ def plot_map(df, selected_parameters, selected_aqi_categories=None, auto_refresh
                 if selected_aqi_categories is None or current_category in selected_aqi_categories:
                     opacity = 200  # Full opacity for selected categories
                 else:
-                    opacity = 60   # Reduced opacity for non-selected categories
+                    opacity = 20   # Reduced opacity for non-selected categories
 
                 # Color
                 if "pm25_color" in sub.columns:
@@ -884,7 +884,7 @@ def main():
                     st.html("""<div class="graphtitle"> Concentración de PM2.5 y CO2 por ruta </div>""")
 
                     df["_time"] = pd.to_datetime(df["_time"].dt.tz_localize(None))
-                    dfchart1 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart1 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=100))]
                     dfchart1x = dfchart1.groupby('location')['PM2.5'].mean().sort_values(ascending=True)
                     dfchart1y = dfchart1.groupby('location')['CO2'].mean().sort_values(ascending=True)
 
@@ -918,9 +918,19 @@ def main():
                     x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                    fig.update_xaxes(tickangle=45)
+
                     fig.update_layout(
                         showlegend=True, 
-                        margin=dict(t=20, b=40, l=40, r=40),
+                        margin=dict(t=20, b=80, l=60, r=40),
+                        legend_font_size=10,  
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ),
                         height=300
                     )
 
@@ -932,7 +942,7 @@ def main():
                     <div class="graphtitle"> Evolución por día del PM2.5 y CO2 </div>
                     """)
 
-                    dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=7))]
+                    dfchart2 = df[df["_time"] > (datetime.now() - pd.Timedelta(days=100))]
                     
                     dfchart2x = dfchart2.groupby('_time')['PM2.5'].mean()
                     dfchart2y = dfchart2.groupby('_time')['CO2'].mean()
@@ -942,9 +952,19 @@ def main():
                     x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                    fig2.update_xaxes(tickangle=45)
+
                     fig2.update_layout(
                         showlegend=True, 
-                        margin=dict(t=20, b=40, l=40, r=40),
+                        margin=dict(t=20, b=80, l=60, r=40),
+                        legend_font_size=10,  
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ),
                         height=300
                     )
                     

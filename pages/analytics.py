@@ -597,9 +597,19 @@ def main():
                 x="Ruta",y=["Promedio CO2", "Promedio PM2.5"], barmode = 'group', labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                fig5.update_xaxes(tickangle=45)
+
                 fig5.update_layout(
                     showlegend=True, 
-                    margin=dict(t=20, b=40, l=40, r=40),
+                    margin=dict(t=20, b=80, l=60, r=40),
+                    legend_font_size=10,  
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ),
                     height=300
                 )
 
@@ -619,9 +629,19 @@ def main():
                 x="Fecha",y=["Promedio CO2", "Promedio PM2.5"], labels={'value':'Concentración'},
                     color_discrete_sequence=["#0FA539","#00707c"])
 
+                fig6.update_xaxes(tickangle=45)
+
                 fig6.update_layout(
                     showlegend=True, 
-                    margin=dict(t=20, b=40, l=40, r=40),
+                    margin=dict(t=20, b=80, l=60, r=40),
+                    legend_font_size=10,  
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ),
                     height=300
                 )
 
