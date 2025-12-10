@@ -394,7 +394,7 @@ header.stAppHeader {
     }
 
     [data-baseweb="popover"]:has([data-baseweb="calendar"]){
-        visibility: hidden;
+        visibility: visible;
     }
 
     .scrollable-container::-webkit-scrollbar {  

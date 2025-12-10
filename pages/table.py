@@ -263,6 +263,15 @@ def main():
                 height=600,
                 on_select="rerun",
             )
+            
+            # botón para descargar el csv
+            csv = filtered_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Descargar CSV",
+                data=csv,
+                file_name=f"calidad_aire_{start_date}_{end_date}.csv",
+                mime="text/csv"
+            )
 
     st.html(
     """

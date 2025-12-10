@@ -742,7 +742,7 @@ def main():
         st.stop()
 
     # Query to fetch data
-    flux = flux_query(bucket="messages", start="-30d")
+    flux = flux_query(bucket="messages", start="-100d")
 
     with st.spinner("Consultando datos..."):
         try:
